@@ -1,5 +1,6 @@
 import datetime
 import math
+import os
 import typer
 
 from typing_extensions import Annotated
@@ -80,6 +81,7 @@ def main(
 
     By default (filtering to a specific time range will change this) the first cell is yesterday of last year, and the last cell is today of this year.
     """
+    os.chdir("../test-repo-plz-ignore-1")
     generate_contrib_banner(user, text, start, end, separator, inverse, repeat)
 
 
@@ -106,6 +108,7 @@ def generate_contrib_banner(
     )
     window.print(cells)
     git = GitHub()
+    # importantly, contribs are in reverse order (most recent first)
     contribs = git.get_user_contributions(
         user,
         start,

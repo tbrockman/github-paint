@@ -8,6 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from multiprocessing import Pool
 from typing import List
+from signal import signal, SIGINT
 
 from .constants import (
     DATETIME_FORMAT,
@@ -24,6 +25,10 @@ class Contribution:
     count: int
 
 
+def initializer():
+    signal(SIGINT, lambda: None)
+
+
 def commit(date: datetime.datetime):
     seconds = math.ceil(date.timestamp())
     return subprocess.run(
@@ -31,12 +36,12 @@ def commit(date: datetime.datetime):
             "git",
             "commit",
             "--allow-empty",
-            "--date",
-            str(seconds),
             "-m",
             DUMMY_COMMIT_MESSAGE,
         ],
         capture_output=True,
+        env=dict(os.environ)
+        | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
     )
 
 
@@ -73,7 +78,7 @@ class GitHub:
                     date = datetime.datetime.strptime(day["date"], DATETIME_FORMAT_DAY)
                     count = day["contributionCount"]
                     contributions.add(Contribution(date, count))
-        return list(sorted(contributions, key=lambda c: c.date))
+        return list(sorted(contributions, key=lambda c: c.date, reverse=True))
 
     def __count_dummy_file_contributions_by_day(self) -> defaultdict[str, int]:
         result = subprocess.run(
@@ -82,8 +87,6 @@ class GitHub:
             text=True,
         )
         counts = defaultdict(int)
-
-        print(f"stderr: {result.stderr} stdout: {result.stdout}")
 
         for line in result.stdout.split("\n"):
             if not line:
@@ -105,7 +108,9 @@ class GitHub:
 
         for i, cell in enumerate(cells):
             contrib = contribs[i]
-            new_count = cell.color.value * max_contribs
+            new_count = (
+                cell.color.value if cell.color.value == 0 else cell.color.value - 1
+            ) * max_contribs
             delta = (
                 new_count  # add the number of contributions for our desired color quartile
                 - contrib.count  # subtract the number of existing contributions on this day
@@ -117,9 +122,8 @@ class GitHub:
         return deltas
 
     def make_necessary_commits(self, deltas: List[Contribution]):
-        # remove our dummy file from the repo
-        print("Removing dummy file from repo")
-        result = subprocess.run(
+        # remove any existing empty commits
+        subprocess.run(
             [
                 "git",
                 "filter-repo",
@@ -127,24 +131,36 @@ class GitHub:
                 "--prune-empty=always",
             ]
         )
-        print(result, result.stderr, result.stdout)
-
         # re-add origin
-        result = subprocess.run(
+        subprocess.run(
             [
                 "git",
                 "remote",
                 "add",
                 "origin",
-                "https://github.com/tbrockman/github-paint",
+                "https://github.com/tbrockman/test-repo-plz-ignore-2",
             ]
         )
+        # checkout a new orphan branch
+        subprocess.run(["git", "checkout", "--orphan", "orphan"])
 
-        with Pool(os.cpu_count() - 2) as pool:
-            for delta in deltas:
+        # create dummy commits
+        with Pool(os.cpu_count() - 2, initializer) as pool:
+            # commit in reverse order
+            for i, delta in enumerate(deltas[::-1]):
                 if delta.count <= 0:
+                    print(
+                        f"Skipping {delta.date} (desired contribution delta={delta.count}) [{i+1}/{len(deltas)}]"
+                    )
                     continue
+                print(
+                    f"Committing {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
+                )
                 pool.map(commit, [delta.date for _ in range(delta.count)])
 
+        # rebase main onto orphan
+        subprocess.run(["git", "checkout", "main"])
+        subprocess.run(["git", "rebase", "orphan", "--reapply-cherry-picks"])
+
         # TODO: allow configuring remote/branch
-        # subprocess.run(["git", "push", "origin", "main"])
+        subprocess.run(["git", "push", "origin", "main", "--force"])
