@@ -121,6 +121,17 @@ class GitHub:
         )
         print(result, result.stderr, result.stdout)
 
+        # re-add origin
+        result = subprocess.run(
+            [
+                "git",
+                "remote",
+                "add",
+                "origin",
+                "https://github.com/tbrockman/github-paint",
+            ]
+        )
+
         for delta in deltas:
             if delta.count <= 0:
                 continue
