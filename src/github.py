@@ -138,11 +138,10 @@ class GitHub:
                     [
                         "git",
                         "commit",
-                        "--allow-empty",
                         "--date",
-                        seconds,
+                        str(seconds),
                         "-m",
-                        f"Contribution for {seconds}, {delta.count}",
+                        f"Contribution for {seconds}",
                     ]
                 )
         # TODO: allow configuring remote/branch
