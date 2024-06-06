@@ -14,4 +14,4 @@ jobs:
         - run: pip install -r requirements.txt
         - name: Run script generation CLI
           run: |
-            GH_TOKEN=${{ secrets.GITHUB_PAT }} python -m src.main "tbrockman" "theo.lol"
+            GH_TOKEN=${{ secrets.GITHUB_PAT }} python -m src.main "tbrockman" "theo.lol" --help
