@@ -31,4 +31,4 @@ jobs:
         if [ -n "${{ github.event.inputs.text }}" ]; then
           text="${{ github.event.inputs.text }}"
         fi
-        GH_TOKEN=${{ secrets.GH_PAINT_PAT }} python -m src.main ${user} ${text} --help
+        GH_TOKEN=${{ secrets.GITHUB_TOKEN }} python -m src.main ${user} ${text} --help
