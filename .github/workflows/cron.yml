@@ -2,16 +2,33 @@ name: Generate GitHub contributions graph
 on: 
   schedule:
     - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      user:
+        description: 'GitHub username to generate contribution graph for'
+        required: true
+      text:
+        description: 'Text to display on the contribution graph'
+        required: true
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-          with:
-            python-version: '3.12'
-            cache: 'pip'
-        - run: pip install -r requirements.txt
-        - name: Run script generation CLI
-          run: |
-            GH_TOKEN=${{ secrets.GH_PAINT_PAT }} python -m src.main "tbrockman" "theo.lol" --help
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    - run: pip install -r requirements.txt
+    - name: Run generation CLI
+      run: |
+        user="tbrockman"
+        text="theo.lol"
+
+        if [ -n "${{ github.event.inputs.user }}" ]; then
+          user="${{ github.event.inputs.user }}"
+        fi
+        if [ -n "${{ github.event.inputs.text }}" ]; then
+          text="${{ github.event.inputs.text }}"
+        fi
+        GH_TOKEN=${{ secrets.GH_PAINT_PAT }} python -m src.main ${user} ${text} --help

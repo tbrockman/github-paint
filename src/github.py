@@ -6,7 +6,7 @@ import subprocess
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import List
 
 from .constants import (
     DATETIME_FORMAT,

@@ -3,6 +3,7 @@ from typing import List
 from . import Font, Glyph
 from ..util import Pixel, Color
 
+
 def nitram_micro_data_to_font(nitram_micro: List[int]) -> Font:
     glyphs: List[Glyph] = []
 
@@ -10,12 +11,17 @@ def nitram_micro_data_to_font(nitram_micro: List[int]) -> Font:
         pixels = []
         for y in range(5):
             for x in range(5):
-                color = Color(4 if nitram_micro[c * 5 + y] & (1 << x) == (1 << x) else 1)
+                color = Color(
+                    4 if nitram_micro[c * 5 + y] & (1 << x) == (1 << x) else 1
+                )
                 pixels.append(Pixel(color))
         glyphs.append(Glyph(pixels, width=5, height=5))
     return Font(glyphs, letter_spacing=1)
 
-# each row of 5 numbers represents a character
+# A default font for using to draw text on the screen
+# Credit: Martin W. Kirst (@nitram509) 
+# GitHub: https://github.com/nitram509/nitram-micro-font
+# Each row of 5 numbers represents a 5x5 character (each int is a binary digit representing 5 on/off pixels)
 nitram_micro_mono_CP437_data = [
     0, 0, 0, 0, 0,
     10, 0, 4, 17, 14,
