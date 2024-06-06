@@ -10,10 +10,10 @@ def nitram_micro_data_to_font(nitram_micro: List[int]) -> Font:
         pixels = []
         for y in range(5):
             for x in range(5):
-                color = Color(4 if nitram_micro[c * 5 + y] & (1 << x) == (1 << x) else 0)
+                color = Color(4 if nitram_micro[c * 5 + y] & (1 << x) == (1 << x) else 1)
                 pixels.append(Pixel(color))
         glyphs.append(Glyph(pixels, width=5, height=5))
-    return Font(glyphs, letter_spacing=2)
+    return Font(glyphs, letter_spacing=1)
 
 # each row of 5 numbers represents a character
 nitram_micro_mono_CP437_data = [
