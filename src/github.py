@@ -11,7 +11,7 @@ from typing import List
 from .constants import (
     DATETIME_FORMAT,
     DATETIME_FORMAT_DAY,
-    DUMMY_COMMIT_PATH,
+    DUMMY_COMMIT_MESSAGE,
     GRAPHQL_QUERY_TEMPLATE,
 )
 from .util import Pixel
@@ -60,19 +60,12 @@ class GitHub:
 
     def __count_dummy_file_contributions_by_day(self) -> defaultdict[str, int]:
         result = subprocess.run(
-            [
-                "git",
-                "log",
-                "--pretty=format:%ct",
-                "--",
-                DUMMY_COMMIT_PATH,
-            ],
+            ["git", "log", "--pretty=format:%ct", f"--grep={DUMMY_COMMIT_MESSAGE}"],
             capture_output=True,
             text=True,
         )
         counts = defaultdict(int)
 
-        print(f"git log --pretty=format:%ct -- {DUMMY_COMMIT_PATH}:")
         print(f"stderr: {result.stderr} stdout: {result.stdout}")
 
         for line in result.stdout.split("\n"):
@@ -114,9 +107,9 @@ class GitHub:
                 "git",
                 "filter-repo",
                 "--force",
-                "--path",
-                DUMMY_COMMIT_PATH,
-                "--invert-paths",
+                "--prune-empty",
+                "--",
+                "--all",
             ]
         )
         print(result, result.stderr, result.stdout)
@@ -138,21 +131,15 @@ class GitHub:
             seconds = math.ceil(delta.date.timestamp())
 
             for _ in range(delta.count):
-                # unnecessarily generate a random string for writing to our dummy file
-                rand_bytes = os.urandom(16).hex()
-
-                with open(DUMMY_COMMIT_PATH, "w") as f:
-                    f.truncate(0)
-                    f.write(rand_bytes)
-                subprocess.run(["git", "add", DUMMY_COMMIT_PATH])
                 subprocess.run(
                     [
                         "git",
                         "commit",
+                        "--allow-empty",
                         "--date",
                         str(seconds),
                         "-m",
-                        f"Contribution for {seconds}",
+                        f"{DUMMY_COMMIT_MESSAGE}",
                     ]
                 )
         # TODO: allow configuring remote/branch
