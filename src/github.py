@@ -6,6 +6,7 @@ import subprocess
 
 from collections import defaultdict
 from dataclasses import dataclass
+from multiprocessing import Pool
 from typing import List
 
 from .constants import (
@@ -21,6 +22,22 @@ from .util import Pixel
 class Contribution:
     date: datetime.datetime
     count: int
+
+
+def commit(date: datetime.datetime):
+    seconds = math.ceil(date.timestamp())
+    return subprocess.run(
+        [
+            "git",
+            "commit",
+            "--allow-empty",
+            "--date",
+            str(seconds),
+            "-m",
+            DUMMY_COMMIT_MESSAGE,
+        ],
+        capture_output=True,
+    )
 
 
 class GitHub:
@@ -123,15 +140,11 @@ class GitHub:
             ]
         )
 
-        for delta in deltas:
-            if delta.count <= 0:
-                continue
-            seconds = math.ceil(delta.date.timestamp())
+        with Pool(os.cpu_count() - 2) as pool:
+            for delta in deltas:
+                if delta.count <= 0:
+                    continue
+                pool.map(commit, [delta.date for _ in range(delta.count)])
 
-            for _ in range(delta.count):
-                subprocess.Popen(
-                    f'git commit --allow-empty --date {seconds} -m "{DUMMY_COMMIT_MESSAGE}"',
-                    shell=True,
-                )
         # TODO: allow configuring remote/branch
         # subprocess.run(["git", "push", "origin", "main"])
