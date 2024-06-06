@@ -121,10 +121,6 @@ class GitHub:
         )
         print(result, result.stderr, result.stdout)
 
-        # create the dummy file
-        subprocess.run(["touch", DUMMY_COMMIT_PATH])
-        subprocess.run(["git", "add", DUMMY_COMMIT_PATH])
-
         for delta in deltas:
             if delta.count <= 0:
                 continue
@@ -137,7 +133,7 @@ class GitHub:
                 with open(DUMMY_COMMIT_PATH, "w") as f:
                     f.truncate(0)
                     f.write(rand_bytes)
-
+                subprocess.run(["git", "add", DUMMY_COMMIT_PATH])
                 subprocess.run(
                     [
                         "git",
@@ -145,7 +141,7 @@ class GitHub:
                         "--allow-empty",
                         "--date",
                         seconds,
-                        "-am",
+                        "-m",
                         f"Contribution for {seconds}, {delta.count}",
                     ]
                 )
