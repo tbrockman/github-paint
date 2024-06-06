@@ -37,7 +37,7 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-Run the CLI:
+### Run the CLI:
 
 ```bash
 python -m src.main --help
