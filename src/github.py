@@ -107,9 +107,7 @@ class GitHub:
                 "git",
                 "filter-repo",
                 "--force",
-                "--prune-empty",
-                "--",
-                "--all",
+                "--prune-empty=always",
             ]
         )
         print(result, result.stderr, result.stdout)
