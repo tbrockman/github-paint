@@ -131,16 +131,9 @@ class GitHub:
             seconds = math.ceil(delta.date.timestamp())
 
             for _ in range(delta.count):
-                subprocess.run(
-                    [
-                        "git",
-                        "commit",
-                        "--allow-empty",
-                        "--date",
-                        str(seconds),
-                        "-m",
-                        f"{DUMMY_COMMIT_MESSAGE}",
-                    ]
+                subprocess.Popen(
+                    f'git commit --allow-empty --date {seconds} -m "{DUMMY_COMMIT_MESSAGE}"',
+                    shell=True,
                 )
         # TODO: allow configuring remote/branch
-        subprocess.run(["git", "push", "origin", "main"])
+        # subprocess.run(["git", "push", "origin", "main"])
