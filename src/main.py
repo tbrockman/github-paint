@@ -4,9 +4,25 @@ import typer
 
 from typing_extensions import Annotated
 
+from dateutil.relativedelta import relativedelta, SU, SA
+
 from .fonts.default import nitram_micro_mono_CP437
 from .github import GitHub
 from .window import Window
+
+now = datetime.datetime.now(datetime.UTC).replace(
+    hour=0, minute=0, second=0, microsecond=0
+)
+sunday_of_this_date_last_year = now - relativedelta(years=1, weekday=SU(-1))
+next_saturday = now + relativedelta(weekday=SA(0))
+
+
+def sunday_of_date(date: datetime.datetime) -> datetime.datetime:
+    return date - relativedelta(weekday=SU(-1))
+
+
+def next_saturday_of_date(date: datetime.datetime) -> datetime.datetime:
+    return date + relativedelta(weekday=SA(0))
 
 
 def main(
@@ -22,8 +38,8 @@ def main(
             help="Text to display on the contribution graph (not guaranteed to fit)"
         ),
     ],
-    start: datetime.datetime = datetime.datetime.now() - datetime.timedelta(days=365),
-    end: datetime.datetime = datetime.datetime.now(),
+    start: datetime.datetime = sunday_of_this_date_last_year,
+    end: datetime.datetime = next_saturday,
     separator: Annotated[
         str,
         typer.Option(
@@ -77,6 +93,8 @@ def generate_contrib_banner(
     repeat: bool,
 ):
     height = 7
+    start = sunday_of_date(start)
+    end = next_saturday_of_date(end)
     weeks = math.ceil((end - start).days / 7)
     window = Window(width=weeks, height=height)
     cells = window.draw(
@@ -87,9 +105,12 @@ def generate_contrib_banner(
         inverse=inverse,
     )
     window.print(cells)
-
     git = GitHub()
-    contribs = git.get_user_contributions(user, start, end)
+    contribs = git.get_user_contributions(
+        user,
+        start,
+        end,
+    )
     deltas = git.calc_necessary_contrib_deltas(cells, contribs)
     git.make_necessary_commits(deltas)
 

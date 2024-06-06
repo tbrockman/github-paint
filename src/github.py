@@ -17,7 +17,7 @@ from .constants import (
 from .util import Pixel
 
 
-@dataclass
+@dataclass(frozen=True)
 class Contribution:
     date: datetime.datetime
     count: int
@@ -35,7 +35,7 @@ class GitHub:
             ranges.append((start, next))
             start = next
 
-        contributions = []
+        contributions = set()
 
         for start_dt, end_dt in ranges:
             start = start_dt.strftime(DATETIME_FORMAT)
@@ -55,8 +55,8 @@ class GitHub:
                 for day in week["contributionDays"]:
                     date = datetime.datetime.strptime(day["date"], DATETIME_FORMAT_DAY)
                     count = day["contributionCount"]
-                    contributions.append(Contribution(date, count))
-        return contributions
+                    contributions.add(Contribution(date, count))
+        return list(sorted(contributions, key=lambda c: c.date))
 
     def __count_dummy_file_contributions_by_day(self) -> defaultdict[str, int]:
         result = subprocess.run(
@@ -83,7 +83,7 @@ class GitHub:
             date = datetime.datetime.fromtimestamp(timestamp).strftime(
                 DATETIME_FORMAT_DAY
             )
-            counts[date] = counts.get(date, 0) + 1
+            counts[date] += 1
         return counts
 
     def calc_necessary_contrib_deltas(

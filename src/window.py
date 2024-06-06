@@ -83,7 +83,7 @@ class Window:
             if not repeat or i >= len(pixels):
                 break
 
-        # Force left padding
+        # Force end padding
         for j in range(self.padding[3] * self.height):
             pixels[len(pixels) - j - 1] = blank_pixel
 
