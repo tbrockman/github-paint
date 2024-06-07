@@ -102,21 +102,28 @@ class GitHub:
     def calc_necessary_contrib_deltas(
         self, cells: List[Pixel], contribs: List[Contribution]
     ) -> List[Contribution]:
-        max_contribs = max([c.count for c in contribs])
         dummy_contribs = self.__count_dummy_file_contributions_by_day()
+        # find the maximum number of contributions on a single day
+        max_contribs = max(
+            [
+                c.count - dummy_contribs[c.date.strftime(DATETIME_FORMAT_DAY)]
+                for c in contribs
+            ]
+        )
         deltas = []
 
         for i, cell in enumerate(cells):
             contrib = contribs[i]
-            new_count = (
-                cell.color.value if cell.color.value == 0 else cell.color.value - 1
+            desired_count = (
+                0 if cell.color.value == 1 else cell.color.value
             ) * max_contribs
+            str_date = contrib.date.strftime(DATETIME_FORMAT_DAY)
             delta = (
-                new_count  # add the number of contributions for our desired color quartile
+                desired_count  # add the number of contributions for our desired color quartile
                 - contrib.count  # subtract the number of existing contributions on this day
-                + dummy_contribs.get(
-                    contrib.date.strftime(DATETIME_FORMAT_DAY), 0
-                )  # add the number of existing dummy commits on this day
+                + dummy_contribs[
+                    str_date
+                ]  # add the number of existing dummy commits on this day
             )
             deltas.append(Contribution(contrib.date, delta))
         return deltas
@@ -142,6 +149,7 @@ class GitHub:
             ]
         )
         # checkout a new orphan branch
+        subprocess.run(["git", "branch", "-D", "orphan"])
         subprocess.run(["git", "checkout", "--orphan", "orphan"])
 
         # create dummy commits
@@ -150,7 +158,7 @@ class GitHub:
             for i, delta in enumerate(deltas[::-1]):
                 if delta.count <= 0:
                     print(
-                        f"Skipping {delta.date} (desired contribution delta={delta.count}) [{i+1}/{len(deltas)}]"
+                        f"Skipping {delta.date} (desired contributions={delta.count}) [{i+1}/{len(deltas)}]"
                     )
                     continue
                 print(

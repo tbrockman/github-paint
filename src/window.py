@@ -57,8 +57,8 @@ class Window:
                     if i >= len(pixels):
                         break
 
-                    # Add the column
-                    for pixel in glyph.get_col(x):
+                    # Add the column (from bottom to top, since as weekdays decrease, the y-axis increases)
+                    for pixel in glyph.get_col(x)[::-1]:
                         pixels[i] = (
                             pixel
                             if not inverse
