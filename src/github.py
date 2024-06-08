@@ -128,7 +128,9 @@ class GitHub:
             deltas.append(Contribution(contrib.date, delta))
         return deltas
 
-    def make_necessary_commits(self, deltas: List[Contribution]):
+    def make_necessary_commits(
+        self, repo: str, deltas: List[Contribution], parallelism: int, dryrun: bool
+    ):
         # remove any existing empty commits
         subprocess.run(
             [
@@ -145,7 +147,7 @@ class GitHub:
                 "remote",
                 "add",
                 "origin",
-                "https://github.com/tbrockman/test-repo-plz-ignore-2",
+                repo,
             ]
         )
         # checkout a new orphan branch
@@ -153,7 +155,7 @@ class GitHub:
         subprocess.run(["git", "checkout", "--orphan", "orphan"])
 
         # create dummy commits
-        with Pool(os.cpu_count() - 2, initializer) as pool:
+        with Pool(parallelism, initializer) as pool:
             # commit in reverse order
             for i, delta in enumerate(deltas[::-1]):
                 if delta.count <= 0:
@@ -170,5 +172,8 @@ class GitHub:
         subprocess.run(["git", "checkout", "main"])
         subprocess.run(["git", "rebase", "orphan", "--reapply-cherry-picks"])
 
-        # TODO: allow configuring remote/branch
-        subprocess.run(["git", "push", "origin", "main", "--force"])
+        if not dryrun:
+            # TODO: allow configuring remote/branch
+            subprocess.run(["git", "push", "origin", "main", "--force"])
+        else:
+            print("Dry run, not pushing to remote")

@@ -1,11 +1,6 @@
 # GitHub Paint
 yet another CLI to draw text in your GitHub contributions graph.
 
-## Usage
-
-1. Fork this repository
-2. Replace the `user` and `text` variables in [`.github\workflows\cron.yml`](.github\workflows\cron.yml)
-
 ## Development
 
 ### Prerequisites
@@ -43,9 +38,6 @@ pip install -r requirements.txt
 ```
 
 ### Run the CLI:
-
-<!-- > [!NOTE]
-> See [creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) for generating the personal access token -->
 
 ```bash
 python -m src.main --help

@@ -1,0 +1,37 @@
+name: 'paint'
+description: 'A GitHub action to paint text in your contribution graph'
+branding:
+  icon: 'message-square'
+  color: 'black'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+inputs:
+  user:
+    description: 'GitHub username to generate contribution graph for'
+    required: true
+  text:
+    description: 'Text to display on the contribution graph'
+    required: true
+  repo:
+    description: 'GitHub repository to push the contribution graph to'
+    required: false
+    default: ${{ github.repository }}
+  start:
+    description: 'Start date for the contribution graph (YYYY-MM-DD, defaults to today - 1y rounded to the earlier sunday)'
+    required: false
+  end:
+    description: 'End date for the contribution graph (YYYY-MM-DD, defaults to today rounded to the next saturday)'
+    required: false
+  separator:
+    description: 'Separator for the contribution graph'
+    required: false
+    default: ' '
+  inverse:
+    description: 'Invert the color of the pixels on the contribution graph'
+    required: false
+    default: false
+  repeat:
+    description: 'Repeat the text on the contribution graph as many times as possible'
+    required: false
+    default: false
