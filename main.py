@@ -90,7 +90,7 @@ def main(
             help="Padding to add to the window (top, right, bottom, left)",
             envvar="INPUT_PADDING",
         ),
-    ] = (1, 1, 1, 1),
+    ] = (0, 0, 0, 0),
     h_align: Annotated[
         HAlign,
         typer.Option(
