@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN ls -R /app
 
-ENTRYPOINT [ "python", "-m", "src.main" ]
+ENTRYPOINT ["sh", "-c", "cd /app && python -m src.main"]
