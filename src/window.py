@@ -68,7 +68,9 @@ class Window(PixelBuffer):
                         text_buffer.buf[i] = (
                             pixel
                             if not inverse
-                            else Pixel(Color(4 - pixel.color.value + 1))
+                            else Pixel(
+                                Color(4 - pixel.color.value + 1)
+                            )  # assumes we don't use Color.GREY
                         )
                         i += 1
 

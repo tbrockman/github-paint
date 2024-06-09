@@ -13,19 +13,18 @@ inputs:
   text:
     description: 'Text to display on the contribution graph'
     required: true
+  token:
+    description: 'GitHub personal access token to use to interact with GH API and push the contribution graph to the repository'
+    required: true
   repo:
     description: 'GitHub repository to push the contribution graph to'
     required: false
     default: ${{ github.repository }}
-  token:
-    description: 'GitHub token to use to interact with GH API and push the contribution graph to the repository'
-    required: false
-    default: ${{ github.token }}
   start:
-    description: 'Start date for the contribution graph (YYYY-MM-DD, defaults to today - 1y. Rounds to the previous sunday)'
+    description: 'Start date for the contribution graph (YYYY-MM-DD, defaults to today - 1y. Start rounds to the previous sunday)'
     required: false
   end:
-    description: 'End date for the contribution graph (YYYY-MM-DD, defaults to today. Rounds to the next saturday)'
+    description: 'End date for the contribution graph (YYYY-MM-DD, defaults to today. End rounds to the next saturday)'
     required: false
   separator:
     description: 'Separator for the contribution graph'
@@ -50,8 +49,8 @@ inputs:
   padding:
     description: 'Padding around the text on the contribution graph (in (top, right, bottom, left) format)'
     required: false
-    default: '1 1 1 1'
+    default: '0 0 0 0'
   dryrun:
-    description: 'Do not push the contribution graph to the repository'
+    description: 'Do not push any commits to the targeted repository'
     required: false
     default: false
