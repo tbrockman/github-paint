@@ -96,7 +96,7 @@ class GitHub:
                     contributions.add(Contribution(date, count))
         return list(sorted(contributions, key=lambda c: c.date, reverse=True))
 
-    def __count_dummy_file_contributions_by_day(self) -> defaultdict[str, int]:
+    def count_dummy_file_contributions_by_day(self) -> defaultdict[str, int]:
         result = subprocess.run(
             ["git", "log", "--pretty=format:%ct", f"--grep={DUMMY_COMMIT_MESSAGE}"],
             capture_output=True,
@@ -118,7 +118,7 @@ class GitHub:
     def calc_necessary_contrib_deltas(
         self, cells: List[Pixel], contribs: List[Contribution]
     ) -> List[Contribution]:
-        dummy_contribs = self.__count_dummy_file_contributions_by_day()
+        dummy_contribs = self.count_dummy_file_contributions_by_day()
         # find the maximum number of contributions on a single day
         max_contribs = max(
             [
