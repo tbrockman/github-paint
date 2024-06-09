@@ -18,7 +18,7 @@ inputs:
     required: false
     default: ${{ github.repository }}
   token:
-    description: 'GitHub token to push the contribution graph with'
+    description: 'GitHub token to use to interact with GH API and push the contribution graph to the repository'
     required: false
     default: ${{ github.token }}
   start:

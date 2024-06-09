@@ -150,11 +150,10 @@ def main(
         v_align=v_align,
     )
     print(window)
-    git = GitHub()
+    git = GitHub(token)
     # note: contribs are in reverse order (most recent first)
     contribs = git.get_user_contributions(
         user,
-        token,
         start,
         end,
     )
