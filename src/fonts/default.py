@@ -8,7 +8,7 @@ def nitram_micro_data_to_font(nitram_micro: List[int]) -> Font:
     glyphs: List[Glyph] = []
 
     for c in range(0, len(nitram_micro) // 5):
-        pixels = []
+        pixels: List[Pixel] = []
         for y in range(5):
             for x in range(5):
                 color = Color(
@@ -69,7 +69,7 @@ nitram_micro_mono_CP437_data = [
     0, 4, 14, 4, 0,
     0, 0, 0, 4, 2,
     0, 0, 14, 0, 0,
-    0, 0, 0, 0, 2,
+    0, 0, 0, 0, 4,
     8, 4, 4, 4, 2,
     14, 25, 21, 19, 14,
     4, 6, 4, 4, 14,

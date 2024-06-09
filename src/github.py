@@ -7,7 +7,7 @@ import subprocess
 from collections import defaultdict
 from dataclasses import dataclass
 from multiprocessing import Pool
-from typing import List
+from typing import List, Set, Tuple
 from signal import signal, SIGINT
 
 from .constants import (
@@ -26,7 +26,7 @@ class Contribution:
 
 
 def initializer():
-    signal(SIGINT, lambda: None)
+    signal(SIGINT, lambda: None)  # type: ignore
 
 
 def commit(date: datetime.datetime):
@@ -50,19 +50,21 @@ class GitHub:
         self, user: str, start: datetime.datetime, end: datetime.datetime
     ) -> List[Contribution]:
         # divide start and end into time ranges of max 365 days (since the GitHub API only allows retrieving 1 year at a time)
-        ranges = []
+        ranges: List[Tuple[datetime.datetime, datetime.datetime]] = []
 
         while start < end:
             next = min(start + datetime.timedelta(days=365), end)
             ranges.append((start, next))
             start = next
 
-        contributions = set()
+        contributions: Set[Contribution] = set()
 
         for start_dt, end_dt in ranges:
-            start = start_dt.strftime(DATETIME_FORMAT)
-            end = end_dt.strftime(DATETIME_FORMAT)
-            query = GRAPHQL_QUERY_TEMPLATE.format(user=user, start=start, end=end)
+            start_str = start_dt.strftime(DATETIME_FORMAT)
+            end_str = end_dt.strftime(DATETIME_FORMAT)
+            query = GRAPHQL_QUERY_TEMPLATE.format(
+                user=user, start=start_str, end=end_str
+            )
             response = subprocess.run(
                 ["gh", "api", "graphql", "-F", f"query={query}"],
                 capture_output=True,
@@ -86,7 +88,7 @@ class GitHub:
             capture_output=True,
             text=True,
         )
-        counts = defaultdict(int)
+        counts: defaultdict[str, int] = defaultdict(int)
 
         for line in result.stdout.split("\n"):
             if not line:
@@ -110,7 +112,7 @@ class GitHub:
                 for c in contribs
             ]
         )
-        deltas = []
+        deltas: List[Contribution] = []
 
         for i, cell in enumerate(cells):
             contrib = contribs[i]

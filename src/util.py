@@ -2,8 +2,9 @@ import datetime
 
 from enum import Enum
 from dataclasses import dataclass
+from typing import List
 
-from dateutil.relativedelta import relativedelta, SU, SA
+from dateutil.relativedelta import relativedelta, SU, SA  # type: ignore
 
 now = datetime.datetime.now(datetime.UTC).replace(
     hour=0, minute=0, second=0, microsecond=0
@@ -28,10 +29,16 @@ class Color(Enum):
     DARKEST_GREEN = 4
 
 
-class Alignment(Enum):
-    LEFT = 0
-    CENTER = 1
-    RIGHT = 2
+class HAlign(str, Enum):
+    LEFT = "left"
+    CENTER = "center"
+    RIGHT = "right"
+
+
+class VAlign(str, Enum):
+    TOP = "top"
+    CENTER = "center"
+    BOTTOM = "bottom"
 
 
 @dataclass
@@ -40,3 +47,21 @@ class Pixel:
 
     def __repr__(self):
         return "█" if self.color != Color.LIGHT_GREEN else " "
+
+
+@dataclass
+class PixelBuffer:
+    buf: List[Pixel]
+    width: int
+    height: int
+
+    def __repr__(self):
+        table = [
+            [Pixel(Color(1)) for _ in range(self.width)] for _ in range(self.height)
+        ]
+
+        for i, pixel in enumerate(self.buf):
+            x = i // self.height
+            y = i % self.height
+            table[y][x] = pixel
+        return "\n".join(["".join([str(pixel) for pixel in row]) for row in table])

@@ -13,7 +13,8 @@ from .util import (
     sunday_of_date,
     next_saturday,
     sunday_of_this_date_last_year,
-    Alignment,
+    HAlign,
+    VAlign,
 )
 
 
@@ -74,20 +75,34 @@ def main(
             envvar="INPUT_REPEAT",
         ),
     ] = False,
-    alignment: Annotated[
-        str,
+    padding: Annotated[
+        tuple[int, int, int, int],
         typer.Option(
-            help="The alignment of the text within the window (LEFT, CENTER, RIGHT)",
-            envvar="INPUT_ALIGNMENT",
+            help="Padding to add to the window (top, right, bottom, left)",
+            envvar="INPUT_PADDING",
         ),
-    ] = Alignment.RIGHT,
+    ] = (1, 1, 1, 1),
+    h_align: Annotated[
+        HAlign,
+        typer.Option(
+            help="The alignment of the text within the window",
+            envvar="INPUT_HALIGN",
+        ),
+    ] = HAlign.CENTER,
+    v_align: Annotated[
+        VAlign,
+        typer.Option(
+            help="The alignment of the text within the window",
+            envvar="INPUT_VALIGN",
+        ),
+    ] = VAlign.CENTER,
     parallelism: Annotated[
         int,
         typer.Option(
             help="The number of parallel processes to use for generating the contribution banner",
             envvar="INPUT_PARALLELISM",
         ),
-    ] = os.cpu_count() - 1,
+    ] = (os.cpu_count() or 2) - 1,
     dryrun: Annotated[
         bool,
         typer.Option(
@@ -109,16 +124,17 @@ def main(
     start = sunday_of_date(start)
     end = next_saturday_of_date(end)
     weeks = math.ceil((end - start).days / 7)
-    window = Window(width=weeks, height=height)
+    window = Window(width=weeks, height=height, padding=(1, 1, 1, 1))
     cells = window.draw(
         text,
         nitram_micro_mono_CP437,
         repeat=repeat,
         separator=separator,
         inverse=inverse,
-        alignment=alignment,
+        h_align=h_align,
+        v_align=v_align,
     )
-    window.print(cells)
+    print(cells)
     git = GitHub()
     # note: contribs are in reverse order (most recent first)
     contribs = git.get_user_contributions(
@@ -126,7 +142,7 @@ def main(
         start,
         end,
     )
-    deltas = git.calc_necessary_contrib_deltas(cells, contribs)
+    deltas = git.calc_necessary_contrib_deltas(cells.buf[::-1], contribs)
     git.make_necessary_commits(repo, deltas, parallelism, dryrun)
 
 

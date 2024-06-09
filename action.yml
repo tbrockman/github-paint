@@ -18,10 +18,10 @@ inputs:
     required: false
     default: ${{ github.repository }}
   start:
-    description: 'Start date for the contribution graph (YYYY-MM-DD, defaults to today - 1y rounded to the earlier sunday)'
+    description: 'Start date for the contribution graph (YYYY-MM-DD, defaults to today - 1y. Rounds to the previous sunday)'
     required: false
   end:
-    description: 'End date for the contribution graph (YYYY-MM-DD, defaults to today rounded to the next saturday)'
+    description: 'End date for the contribution graph (YYYY-MM-DD, defaults to today. Rounds to the next saturday)'
     required: false
   separator:
     description: 'Separator for the contribution graph'
@@ -35,3 +35,15 @@ inputs:
     description: 'Repeat the text on the contribution graph as many times as possible'
     required: false
     default: false
+  valign:
+    description: 'Vertical alignment of the text on the contribution graph (top, center, bottom)'
+    required: false
+    default: 'center'
+  halign:
+    description: 'Horizontal alignment of the text on the contribution graph (left, center, right)'
+    required: false
+    default: 'center'
+  padding:
+    description: 'Padding around the text on the contribution graph (in (top, right, bottom, left) format)'
+    required: false
+    default: '1 1 1 1'
