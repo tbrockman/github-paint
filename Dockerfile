@@ -14,6 +14,5 @@ COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN echo "GH_TOKEN is $GH_TOKEN"
 
-ENTRYPOINT ["sh", "-c", "cd /app && python -m src.main"]
+ENTRYPOINT ["python", "/app/main.py"]

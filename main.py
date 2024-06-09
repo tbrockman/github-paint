@@ -5,10 +5,10 @@ import typer
 
 from typing_extensions import Annotated
 
-from .fonts.default import nitram_micro_mono_CP437
-from .github import GitHub
-from .window import Window
-from .util import (
+from src.fonts.default import nitram_micro_mono_CP437
+from src.github import GitHub
+from src.window import Window
+from src.util import (
     next_saturday_of_date,
     sunday_of_date,
     next_saturday,
