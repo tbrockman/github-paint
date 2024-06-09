@@ -145,13 +145,13 @@ def main(
     print(window)
     git = GitHub()
     # note: contribs are in reverse order (most recent first)
-    # contribs = git.get_user_contributions(
-    #     user,
-    #     start,
-    #     end,
-    # )
-    # deltas = git.calc_necessary_contrib_deltas(cells.buf[::-1], contribs)
-    # git.make_necessary_commits(repo, deltas, parallelism, dryrun)
+    contribs = git.get_user_contributions(
+        user,
+        start,
+        end,
+    )
+    deltas = git.calc_necessary_contrib_deltas(window.buf[::-1], contribs)
+    git.make_necessary_commits(repo, deltas, parallelism, dryrun)
 
 
 if __name__ == "__main__":
