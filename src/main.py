@@ -15,6 +15,8 @@ from .util import (
     sunday_of_this_date_last_year,
     HAlign,
     VAlign,
+    Color,
+    Pixel,
 )
 
 
@@ -120,12 +122,18 @@ def main(
     with 5 shades of green indicating relatively (as a heatmap) how many contributions were made on each day. By default (filtering to a specific time range will change this) the first cell is the previous Sunday of this week last year, and the last visible cell is today.
     Based on one GitHub dev comment (https://github.com/orgs/community/discussions/23261#discussioncomment-3239758), the shade is determined by the distribution of commits in a given time-period, where each shade matches a given quartile.
     """
+    empty_pixel = Pixel(Color(1) if not inverse else Color(4))
     height = 7
     start = sunday_of_date(start)
     end = next_saturday_of_date(end)
     weeks = math.ceil((end - start).days / 7)
-    window = Window(width=weeks, height=height, padding=(1, 1, 1, 1))
-    cells = window.draw(
+    window = Window(
+        width=weeks,
+        height=height,
+        empty_pixel=empty_pixel,
+        padding=padding,
+    )
+    window.draw_text(
         text,
         nitram_micro_mono_CP437,
         repeat=repeat,
@@ -134,16 +142,16 @@ def main(
         h_align=h_align,
         v_align=v_align,
     )
-    print(cells)
+    print(window)
     git = GitHub()
     # note: contribs are in reverse order (most recent first)
-    contribs = git.get_user_contributions(
-        user,
-        start,
-        end,
-    )
-    deltas = git.calc_necessary_contrib_deltas(cells.buf[::-1], contribs)
-    git.make_necessary_commits(repo, deltas, parallelism, dryrun)
+    # contribs = git.get_user_contributions(
+    #     user,
+    #     start,
+    #     end,
+    # )
+    # deltas = git.calc_necessary_contrib_deltas(cells.buf[::-1], contribs)
+    # git.make_necessary_commits(repo, deltas, parallelism, dryrun)
 
 
 if __name__ == "__main__":

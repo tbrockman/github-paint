@@ -6,12 +6,13 @@ from .util import Pixel, PixelBuffer, Color, HAlign, VAlign
 
 
 @dataclass
-class Window:
-    width: int
-    height: int
+class Window(PixelBuffer):
     padding: Tuple[int, int, int, int] = (1, 1, 1, 1)  # top, right, bottom, left
 
-    def draw(
+    def __repr__(self):
+        return super().__repr__()
+
+    def draw_text(
         self,
         text: str,
         font: Font,
@@ -20,13 +21,12 @@ class Window:
         inverse: bool = False,
         h_align: HAlign = HAlign.CENTER,
         v_align: VAlign = VAlign.CENTER,
-    ) -> PixelBuffer:
+    ):
         """
         The draw function takes a text string, a font, and optional parameters to render the text in the window.
 
         Repeated text will be repeated as many times as possible (given window size), and then positioned according to specified alignment and padding.
         """
-        blank_pixel = Pixel(Color(1) if not inverse else Color(4))
 
         text_width, text_height = font.get_text_dims(text)
         sep_width, sep_height = font.get_text_dims(separator)
@@ -39,9 +39,9 @@ class Window:
 
         text_height = max(text_height, sep_height) if repeat else text_height
         text_buffer = PixelBuffer(
-            buf=[blank_pixel for _ in range(text_width * text_height)],
             width=text_width,
             height=text_height,
+            empty_pixel=self.empty_pixel,
         )
 
         first_char = True
@@ -51,7 +51,7 @@ class Window:
             for c in text:
                 if not first_char:
                     for _ in range(font.letter_spacing * text_height):
-                        text_buffer.buf[i] = blank_pixel
+                        text_buffer.buf[i] = self.empty_pixel
                         i += 1
 
                 first_char = False
@@ -73,21 +73,13 @@ class Window:
                         i += 1
 
                     for _ in range(remaining_height):
-                        text_buffer.buf[i] = blank_pixel
+                        text_buffer.buf[i] = self.empty_pixel
                         i += 1
-        window_buffer = PixelBuffer(
-            buf=[blank_pixel for _ in range(self.width * self.height)],
-            width=self.width,
-            height=self.height,
-        )
-        return self.position_buffer_in_window(
-            text_buffer, window_buffer, h_align, v_align
-        )
+        self.layout(text_buffer, h_align, v_align)
 
-    def position_buffer_in_window(
+    def layout(
         self,
         buffer: PixelBuffer,
-        window: PixelBuffer,
         h_align: HAlign,
         v_align: VAlign,
     ):
@@ -99,8 +91,10 @@ class Window:
                 delta_y = self.padding[0]
             case VAlign.CENTER:
                 delta_y = (
-                    self.height - buffer.height + self.padding[0] - self.padding[2]
-                ) // 2
+                    (self.height - buffer.height) // 2
+                    + self.padding[0]
+                    - self.padding[2]
+                )
             case VAlign.BOTTOM:
                 delta_y = self.height - buffer.height - self.padding[2]
 
@@ -109,8 +103,8 @@ class Window:
                 delta_x = self.padding[3]
             case HAlign.CENTER:
                 delta_x = (
-                    self.width - buffer.width + self.padding[3] - self.padding[1]
-                ) // 2
+                    (self.width - buffer.width) // 2 + self.padding[3] - self.padding[1]
+                )
             case HAlign.RIGHT:
                 delta_x = self.width - buffer.width - self.padding[1]
 
@@ -119,9 +113,7 @@ class Window:
                 window_x = j + delta_x
                 window_y = i + delta_y
 
-                if 0 <= window_x < window.width and 0 <= window_y < window.height:
+                if 0 <= window_x < self.width and 0 <= window_y < self.height:
                     buffer_index = j * buffer.height + i
-                    window_index = window_x * window.height + window_y
-                    window.buf[window_index] = buffer.buf[buffer_index]
-
-        return window
+                    window_index = window_x * self.height + window_y
+                    self.buf[window_index] = buffer.buf[buffer_index]

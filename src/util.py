@@ -1,7 +1,7 @@
 import datetime
 
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 from dateutil.relativedelta import relativedelta, SU, SA  # type: ignore
@@ -51,13 +51,17 @@ class Pixel:
 
 @dataclass
 class PixelBuffer:
-    buf: List[Pixel]
     width: int
     height: int
+    empty_pixel: Pixel
+    buf: List[Pixel] = field(init=False)
+
+    def __post_init__(self):
+        self.buf = [self.empty_pixel for _ in range(self.width * self.height)]
 
     def __repr__(self):
         table = [
-            [Pixel(Color(1)) for _ in range(self.width)] for _ in range(self.height)
+            [self.empty_pixel for _ in range(self.width)] for _ in range(self.height)
         ]
 
         for i, pixel in enumerate(self.buf):
