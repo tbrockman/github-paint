@@ -47,7 +47,7 @@ def commit(date: datetime.datetime):
 
 class GitHub:
     def get_user_contributions(
-        self, user: str, start: datetime.datetime, end: datetime.datetime
+        self, user: str, token: str, start: datetime.datetime, end: datetime.datetime
     ) -> List[Contribution]:
         # divide start and end into time ranges of max 365 days (since the GitHub API only allows retrieving 1 year at a time)
         ranges: List[Tuple[datetime.datetime, datetime.datetime]] = []
@@ -67,6 +67,7 @@ class GitHub:
             )
             response = subprocess.run(
                 ["gh", "api", "graphql", "-F", f"query={query}"],
+                env=dict(os.environ) | {"GH_TOKEN": token},
                 capture_output=True,
                 text=True,
             )

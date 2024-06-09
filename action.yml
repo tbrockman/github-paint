@@ -17,6 +17,10 @@ inputs:
     description: 'GitHub repository to push the contribution graph to'
     required: false
     default: ${{ github.repository }}
+  token:
+    description: 'GitHub token to push the contribution graph with'
+    required: false
+    default: ${{ secrets.GITHUB_TOKEN }}
   start:
     description: 'Start date for the contribution graph (YYYY-MM-DD, defaults to today - 1y. Rounds to the previous sunday)'
     required: false

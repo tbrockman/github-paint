@@ -42,6 +42,13 @@ def main(
             envvar="INPUT_REPO",
         ),
     ],
+    token: Annotated[
+        str,
+        typer.Option(
+            help="GitHub personal access token to use for making commits",
+            envvar="INPUT_TOKEN",
+        ),
+    ],
     start: Annotated[
         datetime.datetime,
         typer.Option(
@@ -147,6 +154,7 @@ def main(
     # note: contribs are in reverse order (most recent first)
     contribs = git.get_user_contributions(
         user,
+        token,
         start,
         end,
     )
