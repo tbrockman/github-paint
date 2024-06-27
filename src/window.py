@@ -7,7 +7,7 @@ from .util import Pixel, PixelBuffer, Color, HAlign, VAlign
 
 @dataclass
 class Window(PixelBuffer):
-    padding: Tuple[int, int, int, int] = (1, 1, 1, 1)  # top, right, bottom, left
+    padding: Tuple[int, int, int, int] = (0, 0, 0, 0)  # top, right, bottom, left
 
     def __repr__(self):
         return super().__repr__()

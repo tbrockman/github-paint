@@ -131,7 +131,7 @@ class GitHub:
         for i, cell in enumerate(cells):
             contrib = contribs[i]
             desired_count = (
-                0 if cell.color.value == 1 else cell.color.value
+                0 if cell.color.value == 0 else cell.color.value - 1
             ) * max_contribs
             str_date = contrib.date.strftime(DATETIME_FORMAT_DAY)
             delta = (

@@ -46,7 +46,17 @@ class Pixel:
     color: Color
 
     def __repr__(self):
-        return "█" if self.color != Color.LIGHT_GREEN else " "
+        match self.color:
+            case Color.DARKEST_GREEN:
+                return "█"
+            case Color.DARK_GREEN:
+                return "▓"
+            case Color.GREEN:
+                return "▒"
+            case Color.LIGHT_GREEN:
+                return "░"
+            case Color.GREY:
+                return " "
 
 
 @dataclass
