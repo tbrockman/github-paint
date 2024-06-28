@@ -30,11 +30,11 @@ def initializer():
     signal(SIGINT, lambda: None)  # type: ignore
 
 
-def try_create_worktree(name: str, timeout: int = 60 * 5):
+def try_clone(name: str, timeout: int = 60 * 5):
     start = datetime.datetime.now()
 
     while (datetime.datetime.now() - start).total_seconds() < timeout:
-        result = subprocess.run(["git", "worktree", "add", name])
+        result = subprocess.run(["git", "clone", ".", name])
 
         if result.returncode == 0:
             return
@@ -44,26 +44,43 @@ def commit_date(tup: tuple[datetime.datetime, int]):
     date, count = tup
     # create a worktree
     name = f"day-{date.strftime(DATETIME_FORMAT_DAY)}"
-    try_create_worktree(name)
+    try_clone(name)
     for i in range(count):
         # commit i-times in series (to avoid lock issues)
-        commit(date, i, name)
+        try_commit(date, i, name)
+
+    print(f"Finished committing {count} times on {date}")
 
 
-def commit(date: datetime.datetime, i: int, cwd: str):
-    seconds = math.ceil(date.timestamp())
-    return subprocess.run(
-        [
-            "git",
-            "commit",
-            "--allow-empty",
-            "-m",
-            f" {i=}" + DUMMY_COMMIT_MESSAGE,
-        ],
-        cwd=cwd,
-        env=dict(os.environ)
-        | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
-    )
+def merge_subdir(branch: str):
+    # add folder as a remote
+    subprocess.run(["git", "remote", "add", branch, f"./{branch}"])
+    # fetch the remote
+    subprocess.run(["git", "pull", branch, f"main:{branch}"])
+    # merge the remote
+    subprocess.run(["git", "merge", "--no-ff", "--no-edit", branch])
+    print(f"Finished merging {branch}")
+
+
+def try_commit(date: datetime.datetime, i: int, cwd: str, timeout: int = 60):
+    start = datetime.datetime.now()
+    while (datetime.datetime.now() - start).total_seconds() < timeout:
+        seconds = math.ceil(date.timestamp())
+        result = subprocess.run(
+            [
+                "git",
+                "commit",
+                "--allow-empty",
+                "-m",
+                f" {i=}" + DUMMY_COMMIT_MESSAGE,
+            ],
+            cwd=cwd,
+            env=dict(os.environ)
+            | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
+        )
+
+        if result.returncode == 0:
+            return
 
 
 class GitHub:
@@ -184,35 +201,26 @@ class GitHub:
             subprocess.run(["gh", "repo", "delete", repo, "--yes"])
 
         # create a new repo as a subdirectory
-
         if os.path.exists(repo):
             shutil.rmtree(repo)
         os.mkdir(repo)
         os.chdir(repo)
         subprocess.run(["git", "init", "-b", "main"])
-        commit(deltas[0].date, 0, ".")
+        try_commit(deltas[0].date, 0, ".")
 
         # create dummy commits
         with Pool(parallelism, initializer) as pool:
             filtered = [d for d in deltas if d.count > 0]
 
-            # create commits for each date (as a worktree)
+            # create commits for each date (as a cloned repo)
             pool.map(
                 commit_date,
                 [(delta.date, delta.count) for delta in filtered],
             )
 
-            # merge the worktrees
+            # merge the cloned repos
             for delta in filtered:
-                subprocess.run(
-                    [
-                        "git",
-                        "merge",
-                        "--no-ff",
-                        "--no-edit",
-                        f"day-{delta.date.strftime(DATETIME_FORMAT_DAY)}",
-                    ]
-                )
+                merge_subdir(f"day-{delta.date.strftime(DATETIME_FORMAT_DAY)}")
 
             # for i, delta in enumerate(deltas[::-1]):
             #     if delta.count <= 0:
