@@ -14,12 +14,11 @@ inputs:
     description: 'Text to display on the contribution graph'
     required: true
   token:
-    description: 'GitHub personal access token to use to interact with GH API and push the contribution graph to the repository'
+    description: 'GitHub personal access token with access to create/delete repositories, push commits, and read user information'
     required: true
   repo:
-    description: 'GitHub repository to push the contribution graph to'
-    required: false
-    default: ${{ github.repository }}
+    description: 'Dummy GitHub repository to push the commits to'
+    required: true
   start:
     description: 'Start date for the contribution graph (YYYY-MM-DD, defaults to today - 1y. Start rounds to the previous sunday)'
     required: false

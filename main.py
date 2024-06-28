@@ -3,10 +3,11 @@ import math
 import os
 import typer
 
+from typing import List
 from typing_extensions import Annotated
 
 from src.fonts.default import nitram_micro_mono_CP437
-from src.github import GitHub
+from src.github import GitHub, Contribution
 from src.window import Window
 from src.util import (
     next_saturday_of_date,
@@ -20,6 +21,46 @@ from src.util import (
 )
 
 app = typer.Typer()
+
+
+def print_contribs(
+    contribs: List[Contribution], start: datetime.datetime, end: datetime.datetime
+):
+    height = 7
+    start = sunday_of_date(start)
+    end = next_saturday_of_date(end)
+    weeks = math.ceil((end - start).days / 7)
+    window = Window(
+        width=weeks,
+        height=height,
+        empty_pixel=Pixel(Color(0)),
+        padding=(0, 0, 0, 0),
+    )
+    min_contrib = min(contribs, key=lambda c: c.count).count
+    max_contrib = max(contribs, key=lambda c: c.count).count
+    quarter = (max_contrib) // 4
+
+    print(
+        f"quarters (n * {quarter}): ",
+        max_contrib - quarter,
+        max_contrib - 2 * quarter,
+        max_contrib - 3 * quarter,
+        min_contrib,
+    )
+
+    # experimentally, this seems to be how the graph is colored
+    for i, contrib in enumerate(reversed(contribs)):
+        if contrib.count >= max_contrib - quarter:
+            window.buf[i] = Pixel(Color(4))
+        elif contrib.count >= max_contrib - 2 * quarter:
+            window.buf[i] = Pixel(Color(3))
+        elif contrib.count >= max_contrib - 3 * quarter:
+            window.buf[i] = Pixel(Color(2))
+        elif contrib.count >= min_contrib:
+            window.buf[i] = Pixel(Color(1))
+        else:
+            window.buf[i] = Pixel(Color(0))
+    print(window)
 
 
 @app.command()
@@ -53,36 +94,9 @@ def simulate(
         ),
     ] = next_saturday,
 ):
-    height = 7
-    start = sunday_of_date(start)
-    end = next_saturday_of_date(end)
-    weeks = math.ceil((end - start).days / 7)
-    window = Window(
-        width=weeks,
-        height=height,
-        empty_pixel=Pixel(Color(0)),
-        padding=(0, 0, 0, 0),
-    )
     git = GitHub(token)
     contribs = git.get_user_contributions(user, start, end)
-    min_contrib = min(contribs, key=lambda c: c.count).count
-    max_contrib = max(contribs, key=lambda c: c.count).count
-    quarter = (max_contrib - min_contrib) // 4
-
-    # not sure about what happens if min contrib _isn't_ 0
-    # but experimentally, this seems to be how the graph is colored
-    for i, contrib in enumerate(reversed(contribs)):
-        if contrib.count > max_contrib - quarter:
-            window.buf[i] = Pixel(Color(4))
-        elif contrib.count > max_contrib - 2 * quarter:
-            window.buf[i] = Pixel(Color(3))
-        elif contrib.count > max_contrib - 3 * quarter:
-            window.buf[i] = Pixel(Color(2))
-        elif contrib.count > min_contrib:
-            window.buf[i] = Pixel(Color(1))
-        else:
-            window.buf[i] = Pixel(Color(0))
-    print(window)
+    print_contribs(contribs, start, end)
 
 
 @app.command()
@@ -224,9 +238,13 @@ def draw(
     )
     print(window)
     deltas = git.calc_necessary_contrib_deltas(window.buf[::-1], repo, contribs)
+    print("Commit delta mask (darker=more commits, lighter=less):")
+    print_contribs(deltas, start, end)
 
     if not dryrun:
-        git.make_necessary_commits(repo, deltas, parallelism, dryrun)
+        git.make_necessary_commits(repo, deltas, parallelism)
+    else:
+        print("Dry run, not committing or pushing to GitHub.")
 
 
 if __name__ == "__main__":

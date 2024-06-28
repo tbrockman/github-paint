@@ -48,15 +48,15 @@ class Pixel:
     def __repr__(self):
         match self.color:
             case Color.DARKEST_GREEN:
-                return "█"
+                return "\033[38;5;16m█\033[0m"
             case Color.DARK_GREEN:
-                return "▓"
+                return "\033[38;5;22m█\033[0m"
             case Color.GREEN:
-                return "▒"
+                return "\033[38;5;34m█\033[0m"
             case Color.LIGHT_GREEN:
-                return "░"
+                return "\033[38;5;40m█\033[0m"
             case Color.GREY:
-                return " "
+                return "\033[38;5;28m█\033[0m"
 
 
 @dataclass

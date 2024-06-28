@@ -7,6 +7,7 @@ import subprocess
 
 from collections import defaultdict
 from dataclasses import dataclass
+from multiprocessing import Pool
 from typing import List, Set, Tuple
 from signal import signal, SIGINT
 
@@ -30,7 +31,7 @@ def initializer():
 
 
 def commit(date: datetime.datetime, i: int):
-    seconds = math.ceil(date.timestamp())
+    seconds = math.floor(date.timestamp())
 
     return subprocess.run(
         [
@@ -137,31 +138,51 @@ class GitHub:
             for c in contribs
         ]
         max_contribs = max(contribs_without_dummy)
-        min_contribs = max(min(contribs_without_dummy), 0)
-        quarter = (max_contribs - min_contribs) // 4
+        quarter = max_contribs // 4
 
         deltas: List[Contribution] = []
+
+        # first pass:
+        # calculate the number of commits we need to add to each day to match the desired color
+        # if any day requires a negative number of commits, we will need to add commits to other days
+        minimum_desired = 0
 
         for i, cell in enumerate(cells):
             contrib = contribs[i]
             desired_count = cell.color.value * quarter
             str_date = contrib.date.strftime(DATETIME_FORMAT_DAY)
+            dummy_contrib_count = dummy_contribs[str_date]
             delta = (
                 desired_count  # add the number of contributions for our desired color quartile
                 - contrib.count  # subtract the number of existing contributions on this day
-                + dummy_contribs[
-                    str_date
-                ]  # add the number of existing dummy commits on this day
+                + dummy_contrib_count  # add the number of existing dummy commits on this day
+            )
+            minimum_desired = min(minimum_desired, delta)
+
+        # second pass:
+        # add the minimum number of commits to each day to ensure that no day has a negative number of commits
+        quarter += abs(minimum_desired)
+
+        # TODO: deduplicate this code
+        for i, cell in enumerate(cells):
+            contrib = contribs[i]
+            desired_count = cell.color.value * quarter
+            str_date = contrib.date.strftime(DATETIME_FORMAT_DAY)
+            dummy_contrib_count = dummy_contribs[str_date]
+            delta = (
+                desired_count  # add the number of contributions for our desired color quartile
+                - contrib.count  # subtract the number of existing contributions on this day
+                + dummy_contrib_count  # add the number of existing dummy commits on this day
             )
             deltas.append(Contribution(contrib.date, delta))
+
         return deltas
 
     def make_necessary_commits(
-        self, repo: str, deltas: List[Contribution], parallelism: int, dryrun: bool
+        self, repo: str, deltas: List[Contribution], parallelism: int
     ):
-        if not dryrun:
-            # remove existing repo (if it exists)
-            subprocess.run(["gh", "repo", "delete", repo, "--yes"])
+        # remove existing repo (if it exists)
+        subprocess.run(["gh", "repo", "delete", repo, "--yes"])
 
         # create a new repo as a subdirectory
 
@@ -171,23 +192,23 @@ class GitHub:
         os.chdir(repo)
         subprocess.run(["git", "init"])
 
-        # commit in reverse order
-        for i, delta in enumerate(deltas[::-1]):
-            if delta.count <= 0:
-                print(
-                    f"Skipping {delta.date} (desired contributions={delta.count}) [{i+1}/{len(deltas)}]"
-                )
-                continue
-            print(
-                f"Committing {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
-            )
+        with Pool(parallelism, initializer) as pool:
+            pool.map(commit, [(delta.date, delta.count) for delta in deltas])
 
-            for n in range(delta.count):
-                commit(delta.date, n)
+            # commit in reverse order
+            for i, delta in enumerate(deltas[::-1]):
+                if delta.count <= 0:
+                    print(
+                        f"Skipping {delta.date} (desired contributions={delta.count}) [{i+1}/{len(deltas)}]"
+                    )
+                else:
+                    print(
+                        f"Committing {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
+                    )
 
-        if not dryrun:
-            subprocess.run(
-                ["gh", "repo", "create", repo, "--public", "--push", "--source", "."]
-            )
-        else:
-            print("Dry run, not pushing to GitHub")
+                    for n in range(delta.count):
+                        commit(delta.date, n)
+
+        subprocess.run(
+            ["gh", "repo", "create", repo, "--public", "--push", "--source", "."]
+        )
