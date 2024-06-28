@@ -147,28 +147,14 @@ class GitHub:
     def make_necessary_commits(
         self, repo: str, deltas: List[Contribution], parallelism: int, dryrun: bool
     ):
-        # remove any existing empty commits
-        subprocess.run(
-            [
-                "git",
-                "filter-repo",
-                "--force",
-                "--prune-empty=always",
-            ]
-        )
-        # re-add origin
-        subprocess.run(
-            [
-                "git",
-                "remote",
-                "add",
-                "origin",
-                repo,
-            ]
-        )
-        # checkout a new orphan branch
-        subprocess.run(["git", "branch", "-D", "orphan"])
-        subprocess.run(["git", "checkout", "--orphan", "orphan"])
+        # remove existing repo (if it exists)
+        subprocess.run(["gh", "repo", "delete", repo, "--yes"])
+
+        # create a new repo as a subdirectory
+        subprocess.run(["rm", "-rf", repo])
+        subprocess.run(["mkdir", repo])
+        os.chdir(repo)
+        subprocess.run(["git", "init"])
 
         # create dummy commits
         with Pool(parallelism, initializer) as pool:
@@ -184,12 +170,9 @@ class GitHub:
                 )
                 pool.map(commit, [delta.date for _ in range(delta.count)])
 
-        # rebase main onto orphan
-        subprocess.run(["git", "checkout", "main"])
-        subprocess.run(["git", "rebase", "orphan", "--reapply-cherry-picks"])
-
         if not dryrun:
-            # TODO: allow configuring remote/branch
-            subprocess.run(["git", "push", "origin", "main", "--force"])
+            subprocess.run(
+                ["gh", "repo", "create", repo, "--public", "--push", "--source", "."]
+            )
         else:
-            print("Dry run, not pushing to remote")
+            print("Dry run, not pushing to GitHub")

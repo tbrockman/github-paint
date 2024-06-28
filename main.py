@@ -24,7 +24,7 @@ def main(
     user: Annotated[
         str,
         typer.Argument(
-            help="GitHub user to generate the contribution banner for (e.g. 'tbrockman')",
+            help="GitHub user to generate the contribution banner for (e.g. 'tbrockman'). Used to retrieve existing contributions",
             envvar="INPUT_USER",
         ),
     ],
@@ -35,13 +35,6 @@ def main(
             envvar="INPUT_TEXT",
         ),
     ],
-    repo: Annotated[
-        str,
-        typer.Argument(
-            help="The remote repository to push the commits to (e.g. 'https://github.com/tbrockman/github-paint')",
-            envvar="INPUT_REPO",
-        ),
-    ],
     token: Annotated[
         str,
         typer.Option(
@@ -49,6 +42,13 @@ def main(
             envvar="INPUT_TOKEN",
         ),
     ],
+    repo: Annotated[
+        str,
+        typer.Option(
+            help="The name of the repo to create fake commits in (must be owned by the user). Also used as the name of the subdirectory to initialize the repo in",
+            envvar="INPUT_REPO",
+        ),
+    ] = "github-paint-test",
     start: Annotated[
         datetime.datetime,
         typer.Option(
