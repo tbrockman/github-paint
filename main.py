@@ -19,8 +19,74 @@ from src.util import (
     Pixel,
 )
 
+app = typer.Typer()
 
-def main(
+
+@app.command()
+def simulate(
+    user: Annotated[
+        str,
+        typer.Argument(
+            help="GitHub user to simulate contribution banner for (e.g. 'tbrockman'). Used to retrieve existing contributions",
+            envvar="INPUT_USER",
+        ),
+    ],
+    token: Annotated[
+        str,
+        typer.Option(
+            help="GitHub personal access token (used for creating/deleting repos, pushing commits, and getting user contribution history)",
+            envvar="INPUT_TOKEN",
+        ),
+    ],
+    start: Annotated[
+        datetime.datetime,
+        typer.Option(
+            help="The start of the date range to generate the contribution banner for (will be rounded to the start of the previous Sunday)",
+            envvar="INPUT_START",
+        ),
+    ] = sunday_of_this_date_last_year,
+    end: Annotated[
+        datetime.datetime,
+        typer.Option(
+            help="The end of the date range to generate the contribution banner for (will be rounded to the start of next Saturday)",
+            envvar="INPUT_END",
+        ),
+    ] = next_saturday,
+):
+    height = 7
+    start = sunday_of_date(start)
+    end = next_saturday_of_date(end)
+    weeks = math.ceil((end - start).days / 7)
+    window = Window(
+        width=weeks,
+        height=height,
+        empty_pixel=Pixel(Color(0)),
+        padding=(0, 0, 0, 0),
+    )
+    git = GitHub(token)
+    contribs = git.get_user_contributions(user, start, end)
+    min_contrib = min(contribs, key=lambda c: c.count).count
+    max_contrib = max(contribs, key=lambda c: c.count).count
+    quarter = (max_contrib - min_contrib) // 4
+
+    # not sure about what happens if min contrib _isn't_ 0
+    # but experimentally, this seems to be how the graph is colored
+    for i, contrib in enumerate(reversed(contribs)):
+        if contrib.count > max_contrib - quarter:
+            window.buf[i] = Pixel(Color(4))
+        elif contrib.count > max_contrib - 2 * quarter:
+            window.buf[i] = Pixel(Color(3))
+        elif contrib.count > max_contrib - 3 * quarter:
+            window.buf[i] = Pixel(Color(2))
+        elif contrib.count > min_contrib:
+            window.buf[i] = Pixel(Color(1))
+        else:
+            window.buf[i] = Pixel(Color(0))
+    print(window)
+
+
+@app.command()
+def draw(
     user: Annotated[
         str,
         typer.Argument(
@@ -38,7 +104,7 @@ def main(
     token: Annotated[
         str,
         typer.Option(
-            help="GitHub personal access token to use for making commits",
+            help="GitHub personal access token (used for creating/deleting repos, pushing commits, and getting user contribution history)",
             envvar="INPUT_TOKEN",
         ),
     ],
@@ -161,24 +227,7 @@ def main(
 
     if not dryrun:
         git.make_necessary_commits(repo, deltas, parallelism, dryrun)
-    else:
-        dummy_counts = git.count_dummy_repo_contributions(repo)
-        counts = list(sorted([c for c in dummy_counts.values()]))
-        print(counts)
-        one_quarter_len = len(counts) // 4
-
-        for i, (_, count) in enumerate(reversed(dummy_counts.items())):
-            # print(i, date, count)
-            if count > counts[one_quarter_len * 3]:
-                window.buf[i] = Pixel(Color(4) if not inverse else Color(1))
-            elif count > counts[one_quarter_len * 2]:
-                window.buf[i] = Pixel(Color(3) if not inverse else Color(2))
-            elif count > counts[one_quarter_len]:
-                window.buf[i] = Pixel(Color(2) if not inverse else Color(3))
-            else:
-                window.buf[i] = Pixel(Color(1) if not inverse else Color(4))
-        print(window)
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app()

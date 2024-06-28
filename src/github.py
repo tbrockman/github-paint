@@ -7,7 +7,6 @@ import subprocess
 
 from collections import defaultdict
 from dataclasses import dataclass
-from multiprocessing import Pool
 from typing import List, Set, Tuple
 from signal import signal, SIGINT
 
@@ -30,27 +29,21 @@ def initializer():
     signal(SIGINT, lambda: None)  # type: ignore
 
 
-def try_commit(tup: tuple[datetime.datetime, int]):
-    start = datetime.datetime.now()
-    timeout = 60 * 5
-    date, i = tup
-    seconds = math.ceil(date.timestamp()) + i
+def commit(date: datetime.datetime, i: int):
+    seconds = math.ceil(date.timestamp())
 
-    while (datetime.datetime.now() - start).total_seconds() < timeout:
-        result = subprocess.run(
-            [
-                "git",
-                "commit",
-                "--allow-empty",
-                "-m",
-                f"{i=} " + DUMMY_COMMIT_MESSAGE,
-            ],
-            capture_output=True,
-            env=dict(os.environ)
-            | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
-        )
-        if result.returncode == 0:
-            return
+    return subprocess.run(
+        [
+            "git",
+            "commit",
+            "--allow-empty",
+            "-m",
+            f"{i=} " + DUMMY_COMMIT_MESSAGE,
+        ],
+        capture_output=True,
+        env=dict(os.environ)
+        | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
+    )
 
 
 class GitHub:
@@ -139,19 +132,19 @@ class GitHub:
             dummy_contribs = self.count_dummy_repo_contributions(repo)
 
         # find the maximum number of contributions on a single day
-        max_contribs = max(
-            [
-                c.count - dummy_contribs[c.date.strftime(DATETIME_FORMAT_DAY)]
-                for c in contribs
-            ]
-        )
+        contribs_without_dummy = [
+            c.count - dummy_contribs[c.date.strftime(DATETIME_FORMAT_DAY)]
+            for c in contribs
+        ]
+        max_contribs = max(contribs_without_dummy)
+        min_contribs = max(min(contribs_without_dummy), 0)
+        quarter = (max_contribs - min_contribs) // 4
+
         deltas: List[Contribution] = []
 
         for i, cell in enumerate(cells):
             contrib = contribs[i]
-            desired_count = (
-                0 if cell.color.value == 0 else cell.color.value - 1
-            ) * max_contribs
+            desired_count = cell.color.value * quarter
             str_date = contrib.date.strftime(DATETIME_FORMAT_DAY)
             delta = (
                 desired_count  # add the number of contributions for our desired color quartile
@@ -178,19 +171,19 @@ class GitHub:
         os.chdir(repo)
         subprocess.run(["git", "init"])
 
-        # create dummy commits
-        with Pool(parallelism, initializer) as pool:
-            # commit in reverse order
-            for i, delta in enumerate(deltas[::-1]):
-                if delta.count <= 0:
-                    print(
-                        f"Skipping {delta.date} (desired contributions={delta.count}) [{i+1}/{len(deltas)}]"
-                    )
-                    continue
+        # commit in reverse order
+        for i, delta in enumerate(deltas[::-1]):
+            if delta.count <= 0:
                 print(
-                    f"Committing {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
+                    f"Skipping {delta.date} (desired contributions={delta.count}) [{i+1}/{len(deltas)}]"
                 )
-                pool.map(try_commit, [(delta.date, i) for i in range(delta.count)])
+                continue
+            print(
+                f"Committing {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
+            )
+
+            for n in range(delta.count):
+                commit(delta.date, n)
 
         if not dryrun:
             subprocess.run(
