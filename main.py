@@ -157,12 +157,12 @@ def main(
         v_align=v_align,
     )
     print(window)
-    deltas = git.calc_necessary_contrib_deltas(window.buf[::-1], contribs)
+    deltas = git.calc_necessary_contrib_deltas(window.buf[::-1], repo, contribs)
 
     if not dryrun:
         git.make_necessary_commits(repo, deltas, parallelism, dryrun)
     else:
-        dummy_counts = git.count_dummy_file_contributions_by_day()
+        dummy_counts = git.count_dummy_repo_contributions(repo)
         counts = list(sorted([c for c in dummy_counts.values()]))
         print(counts)
         one_quarter_len = len(counts) // 4

@@ -1,4 +1,4 @@
-DUMMY_COMMIT_MESSAGE = "## github-paint dummy commit ##"
+DUMMY_COMMIT_MESSAGE = "// github-paint dummy commit"
 DATETIME_FORMAT_DAY = "%Y-%m-%d"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 # ex contributon date: '2023-10-03T00:00:00.000+00:00'
