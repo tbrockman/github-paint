@@ -40,6 +40,7 @@ def commit(date: datetime.datetime, i: int):
             "-m",
             f"{i=} " + DUMMY_COMMIT_MESSAGE,
         ],
+        capture_output=True,
         env=dict(os.environ)
         | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
         check=True,
@@ -206,6 +207,9 @@ class GitHub:
 
                 for n in range(delta.count):
                     commit(delta.date, n)
+        subprocess.run(
+            ["gh", "repo", "create", repo, "--public", "--push", "--source", "."]
+        )
 
     def get_user(self) -> dict[str, str]:
         response = subprocess.run(["gh", "api", "user"], capture_output=True, text=True)
