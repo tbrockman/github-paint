@@ -25,7 +25,7 @@ a GitHub action to draw text in your GitHub contributions graph.
         steps:
         - uses: tbrockman/github-paint@latest # or choose a specific semver (ex. tbrockman/github-paint@v1.0.1)
         with:
-            text: theo.lol # only 
+            text: theo.lol # not all characters supported, see https://github.com/nitram509/nitram-micro-font
             token: ${{ secrets.GH_PAINT_PAT }}
             # [optional]:
             # inverse: true # invert pixel color (darker <-> lighter)
