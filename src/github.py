@@ -7,7 +7,6 @@ import subprocess
 
 from collections import defaultdict
 from dataclasses import dataclass
-from multiprocessing import Pool
 from typing import List, Set, Tuple
 from signal import signal, SIGINT
 
@@ -163,7 +162,6 @@ class GitHub:
         # add the minimum number of commits to each day to ensure that no day has a negative number of commits
         quarter += abs(minimum_desired)
 
-        # TODO: deduplicate this code
         for i, cell in enumerate(cells):
             contrib = contribs[i]
             desired_count = cell.color.value * quarter
@@ -192,22 +190,19 @@ class GitHub:
         os.chdir(repo)
         subprocess.run(["git", "init"])
 
-        with Pool(parallelism, initializer) as pool:
-            pool.map(commit, [(delta.date, delta.count) for delta in deltas])
+        # commit in reverse order
+        for i, delta in enumerate(deltas[::-1]):
+            if delta.count <= 0:
+                print(
+                    f"Skipping {delta.date} (desired contributions={delta.count}) [{i+1}/{len(deltas)}]"
+                )
+            else:
+                print(
+                    f"Committing {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
+                )
 
-            # commit in reverse order
-            for i, delta in enumerate(deltas[::-1]):
-                if delta.count <= 0:
-                    print(
-                        f"Skipping {delta.date} (desired contributions={delta.count}) [{i+1}/{len(deltas)}]"
-                    )
-                else:
-                    print(
-                        f"Committing {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
-                    )
-
-                    for n in range(delta.count):
-                        commit(delta.date, n)
+                for n in range(delta.count):
+                    commit(delta.date, n)
 
         subprocess.run(
             ["gh", "repo", "create", repo, "--public", "--push", "--source", "."]
