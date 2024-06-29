@@ -108,8 +108,9 @@ class GitHub:
         # clone the repo
         subprocess.run(["gh", "repo", "clone", repo])
         os.chdir(repo)
+        # we assume all commits in this repository are dummy commits
         result = subprocess.run(
-            ["git", "log", "--pretty=format:%ct", f"--grep={DUMMY_COMMIT_MESSAGE}"],
+            ["git", "log", "--pretty=format:%ct"],
             capture_output=True,
             text=True,
         )
