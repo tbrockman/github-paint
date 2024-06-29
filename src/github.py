@@ -189,6 +189,7 @@ class GitHub:
             shutil.rmtree(path)
         os.mkdir(path)
         os.chdir(path)
+        print("work dir:" + os.getcwd())
         subprocess.run(["git", "init", "-b", "main"])
 
         # commit in reverse order
@@ -205,6 +206,9 @@ class GitHub:
                 for n in range(delta.count):
                     commit(delta.date, n)
 
+        print("work dir:" + os.getcwd())
+        subprocess.run(["ls", "-la"])
+        subprocess.run(["git", "log", "-n", "10"])
         subprocess.run(
-            ["gh", "repo", "create", repo, "--public", "--push", "--source", "."]
+            ["gh", "repo", "create", repo, "--public", "--push", "--source", "./"]
         )
