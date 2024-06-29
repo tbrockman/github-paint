@@ -35,7 +35,7 @@ a GitHub action to draw text in your GitHub contributions graph.
             # start: 2020-01-01 # start of drawing window
             # end: 2025-12-12 # end of drawing window
             # repeat: false # repeat text as much as possible over the window
-            # separator: "|" # what to use as a separator when repeat=true
+            # separator: " " # what to use as a separator when repeat=true
             # padding: (1,1,1,1) # (top,right,bottom,left) padding to add to the window (will clip content if necessary)
             # valign: center # text vertical alignment (top, center, bottom)
             # halign: center # text horizontal alignment (left, center, right)
