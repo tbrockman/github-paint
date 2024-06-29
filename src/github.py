@@ -40,7 +40,6 @@ def commit(date: datetime.datetime, i: int):
             "-m",
             f"{i=} " + DUMMY_COMMIT_MESSAGE,
         ],
-        capture_output=True,
         env=dict(os.environ)
         | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
     )
