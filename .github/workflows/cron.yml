@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: ./paint
+    - uses: .
       with:
         user: tbrockman
         text: theo.lol
