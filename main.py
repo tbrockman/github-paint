@@ -100,13 +100,6 @@ def simulate(
 
 @app.command()
 def draw(
-    user: Annotated[
-        str,
-        typer.Argument(
-            help="GitHub user to generate the contribution banner for (e.g. 'tbrockman'). Used to retrieve existing contributions",
-            envvar="INPUT_USER",
-        ),
-    ],
     text: Annotated[
         str,
         typer.Argument(
@@ -121,6 +114,13 @@ def draw(
             envvar="INPUT_TOKEN",
         ),
     ],
+    user: Annotated[
+        str,
+        typer.Option(
+            help="GitHub user to generate the contribution banner for (e.g. 'tbrockman'). Used to retrieve existing contributions. Defaults to the GH user of the token.",
+            envvar="INPUT_USER",
+        ),
+    ] = "",
     git_name: Annotated[
         str,
         typer.Option(
@@ -209,7 +209,7 @@ def draw(
         bool,
         typer.Option(
             help="Whether or not to actually push the commits to the remote repository (useful for testing)",
-            envvar="INPUT_DRYRUN",
+            envvar="INPUT_DRY_RUN",
         ),
     ] = False,
 ):
@@ -234,6 +234,13 @@ def draw(
         padding=padding,
     )
     git = GitHub(token)
+
+    if not user or not git_name or not git_email:
+        github_user = git.get_user()
+        user = user or github_user["login"]
+        git_name = git_name or github_user["name"]
+        git_email = git_email or github_user["email"]
+
     # note: contribs are in reverse order (most recent first)
     contribs = git.get_user_contributions(
         user,
@@ -253,11 +260,6 @@ def draw(
     deltas = git.calc_necessary_contrib_deltas(window.buf[::-1], repo, contribs)
     print("Commit delta mask (darker=more commits, lighter=less):")
     print_contribs(deltas, start, end)
-
-    if git_name == "" or git_email == "":
-        github_user = git.get_user()
-        git_name = git_name or github_user["name"]
-        git_email = git_email or github_user["email"]
 
     if not dry_run:
         git.make_necessary_commits(repo, deltas, git_name, git_email)

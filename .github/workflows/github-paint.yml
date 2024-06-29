@@ -9,7 +9,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - uses: ./
+    - uses: ./ # replace this with a specific version of the action
       with:
         user: tbrockman
         text: theo.lol
