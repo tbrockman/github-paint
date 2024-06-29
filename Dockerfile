@@ -13,6 +13,4 @@ RUN (type -p wget >/dev/null || (apt update && apt-get install wget -y)) \
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-
-ENTRYPOINT ["python", "/app/main.py"]
+ENTRYPOINT ["python", "/app/main.py", "draw"]
