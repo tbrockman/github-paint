@@ -7,7 +7,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: ../../paint
+    - name: Checkout
+      uses: actions/checkout@v4
+    - uses: ./paint
       with:
         user: tbrockman
         text: theo.lol
