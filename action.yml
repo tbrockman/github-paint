@@ -19,6 +19,12 @@ inputs:
   repo:
     description: 'Dummy GitHub repository to push the commits to'
     required: true
+  git_name:
+    description: 'Name to use for the git commits (defaults to name found in the GitHub user profile of the associated token)'
+    required: false
+  git_email:
+    description: 'Email to use for the git commits (defaults to email found in the GitHub user profile of the associated token)'
+    required: false
   start:
     description: 'Start date for the contribution graph (YYYY-MM-DD, defaults to today - 1y. Start rounds to the previous sunday)'
     required: false

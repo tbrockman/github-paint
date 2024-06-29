@@ -1,6 +1,5 @@
 import datetime
 import math
-import os
 import typer
 
 from typing import List
@@ -122,6 +121,20 @@ def draw(
             envvar="INPUT_TOKEN",
         ),
     ],
+    git_name: Annotated[
+        str,
+        typer.Option(
+            help="Name for git user (defaults to name in GitHub profile of token user)",
+            envvar="INPUT_GIT_NAME",
+        ),
+    ] = "",
+    git_email: Annotated[
+        str,
+        typer.Option(
+            help="Email for git user (defaults to email in GitHub profile of token user)",
+            envvar="INPUT_GIT_EMAIL",
+        ),
+    ] = "",
     repo: Annotated[
         str,
         typer.Option(
@@ -185,14 +198,14 @@ def draw(
             envvar="INPUT_VALIGN",
         ),
     ] = VAlign.CENTER,
-    parallelism: Annotated[
-        int,
-        typer.Option(
-            help="The number of parallel processes to use for generating the contribution banner",
-            envvar="INPUT_PARALLELISM",
-        ),
-    ] = (os.cpu_count() or 2) - 1,
-    dryrun: Annotated[
+    # parallelism: Annotated[
+    #     int,
+    #     typer.Option(
+    #         help="The number of parallel processes to use for generating the contribution banner",
+    #         envvar="INPUT_PARALLELISM",
+    #     ),
+    # ] = (os.cpu_count() or 2) - 1,
+    dry_run: Annotated[
         bool,
         typer.Option(
             help="Whether or not to actually push the commits to the remote repository (useful for testing)",
@@ -241,8 +254,13 @@ def draw(
     print("Commit delta mask (darker=more commits, lighter=less):")
     print_contribs(deltas, start, end)
 
-    if not dryrun:
-        git.make_necessary_commits(repo, deltas, parallelism)
+    if git_name == "" or git_email == "":
+        github_user = git.get_user()
+        git_name = git_name or github_user["name"]
+        git_email = git_email or github_user["email"]
+
+    if not dry_run:
+        git.make_necessary_commits(repo, deltas, git_name, git_email)
     else:
         print("Dry run, not committing or pushing to GitHub.")
 

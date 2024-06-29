@@ -42,6 +42,7 @@ def commit(date: datetime.datetime, i: int):
         ],
         env=dict(os.environ)
         | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
+        check=True,
     )
 
 
@@ -176,7 +177,7 @@ class GitHub:
         return deltas
 
     def make_necessary_commits(
-        self, repo: str, deltas: List[Contribution], parallelism: int
+        self, repo: str, deltas: List[Contribution], name: str, email: str
     ):
         # remove existing repo (if it exists)
         subprocess.run(["gh", "repo", "delete", repo, "--yes"])
@@ -188,8 +189,9 @@ class GitHub:
             shutil.rmtree(path)
         os.mkdir(path)
         os.chdir(path)
-        print("work dir:" + os.getcwd())
-        subprocess.run(["git", "init", "-b", "main"])
+        subprocess.run(["git", "config", "--global", "user.name", name])
+        subprocess.run(["git", "config", "--global", "user.email", email])
+        subprocess.run(["git", "init", "-b", "main"], check=True)
 
         # commit in reverse order
         for i, delta in enumerate(deltas[::-1]):
@@ -205,9 +207,6 @@ class GitHub:
                 for n in range(delta.count):
                     commit(delta.date, n)
 
-        print("work dir:" + os.getcwd())
-        subprocess.run(["ls", "-la"])
-        subprocess.run(["git", "log", "-n", "10"])
-        subprocess.run(
-            ["gh", "repo", "create", repo, "--public", "--push", "--source", "./"]
-        )
+    def get_user(self) -> dict[str, str]:
+        response = subprocess.run(["gh", "api", "user"], capture_output=True, text=True)
+        return json.loads(response.stdout)
