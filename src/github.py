@@ -183,12 +183,13 @@ class GitHub:
         subprocess.run(["gh", "repo", "delete", repo, "--yes"])
 
         # create a new repo as a subdirectory
+        path = os.path.join("../", repo)
 
-        if os.path.exists(repo):
-            shutil.rmtree(repo)
-        os.mkdir(repo)
-        os.chdir(repo)
-        subprocess.run(["git", "init"])
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.mkdir(path)
+        os.chdir(path)
+        subprocess.run(["git", "init", "-b", "main"])
 
         # commit in reverse order
         for i, delta in enumerate(deltas[::-1]):
