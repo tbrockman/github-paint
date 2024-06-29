@@ -11,7 +11,6 @@ jobs:
       uses: actions/checkout@v4
     - uses: ./ # replace this with a specific version of the action
       with:
-        user: tbrockman
         text: theo.lol
         token: ${{ secrets.GH_PAINT_PAT }}
         repo: 'github-paint-test'

@@ -141,7 +141,7 @@ def draw(
             help="The name of the repo to create fake commits in (must be owned by the user). Also used as the name of the subdirectory to initialize the repo in",
             envvar="INPUT_REPO",
         ),
-    ] = "github-paint-test",
+    ] = "github-painted",
     start: Annotated[
         datetime.datetime,
         typer.Option(

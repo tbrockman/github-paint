@@ -1,7 +1,7 @@
 # GitHub Paint
-yet another CLI to draw text in your GitHub contributions graph.
+a GitHub action to draw text in your GitHub contributions graph.
 
-![ex](./assets/example.png)
+![example contribution graph](./assets/example.png)
 
 ## Usage
 
@@ -31,7 +31,7 @@ yet another CLI to draw text in your GitHub contributions graph.
             # inverse: true # invert pixel color (darker <-> lighter)
             # git_email: 'abc@example.dev' # set a specific email for git author attribution (defaults to token user primary email)
             # git_name: theo # choose an alternate name for git author contribution (defaults to token user name)
-            # repo: 'github-paint.theo.lol' # destination repository for the filler commits
+            # repo: 'github-paint-commits' # destination repository for the filler commits
             # start: 2020-01-01 # start of drawing window
             # end: 2025-12-12 # end of drawing window
             # repeat: false # repeat text as much as possible over the window
