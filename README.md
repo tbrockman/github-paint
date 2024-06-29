@@ -16,15 +16,15 @@ a GitHub action to draw text in your GitHub contributions graph.
     ```yml
     name: Generate GitHub contributions graph
     on: 
-    schedule:
+      schedule:
         - cron: '0 0 * * *' # run daily if you care about having the graph coloring up-to-date
-    workflow_dispatch: # or just run it manually every now and again
+      workflow_dispatch: # or just run it manually every now and again
     jobs:
-    build:
+      build:
         runs-on: ubuntu-latest
         steps:
         - uses: tbrockman/github-paint@latest # or choose a specific semver (ex. tbrockman/github-paint@v1.0.1)
-        with:
+          with:
             text: theo.lol # basic ascii chars supported
             token: ${{ secrets.GH_PAINT_PAT }}
             # [optional]:
