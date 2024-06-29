@@ -8,15 +8,10 @@ yet another CLI to draw text in your GitHub contributions graph.
 > [!NOTE] 
 > See [`action.yml`](./action.yml) for additional configuration documentation
 
-1. Create a [GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with **repo**, **read:user**, **user:email**, and **delete_repo** permissions (used to clean up previous repo commits and automatically retrieve necessary user information).
+1. [Create a GitHub Personal Access Token](https://github.com/settings/tokens) ([docs](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens])) with **repo**, **read:user**, **user:email**, and **delete_repo** permissions (used to clean up previous repo commits and automatically retrieve necessary user information).
 1. In a new or existing repository, store the access token as a GitHub secret under the key `GH_PAINT_PAT`
-1. Create a workflow to invoke the GitHub action in a new or existing GitHub repository:
+1. Create a workflow to invoke the action:
 
-    <details>
-    <summary>
-        Example workflow
-    </summary>
-    
     `.github/workflows/github-paint.yml`
     ```yml
     name: Generate GitHub contributions graph
@@ -46,8 +41,7 @@ yet another CLI to draw text in your GitHub contributions graph.
             # halign: center # text horizontal alignment (left, center, right)
             # dry_run: false # whether to actually perform write actions (manage commits or repos)
     ```
-    </details>
-1. Execute the workflow manually (or wait for the cron to trigger)
+1. Execute the workflow (or wait for the cron to trigger)
 
 
 ## Development
