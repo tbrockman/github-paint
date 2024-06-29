@@ -1,4 +1,5 @@
-DUMMY_COMMIT_MESSAGE = "// github-paint <want to build something? 📬 iam@theo.lol 🏠 theo.lol 💼 in/iamtheolol>"
+DUMMY_COMMIT_MESSAGE = "// created by github-paint 🎨"
+JOB_AD = "want to build something? 📬 iam@theo.lol 🏠 theo.lol 💼 in/iamtheolol"
 DATETIME_FORMAT_DAY = "%Y-%m-%d"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 # ex contributon date: '2023-10-03T00:00:00.000+00:00'

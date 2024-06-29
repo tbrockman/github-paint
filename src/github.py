@@ -15,6 +15,7 @@ from .constants import (
     DATETIME_FORMAT_DAY,
     DUMMY_COMMIT_MESSAGE,
     GRAPHQL_QUERY_TEMPLATE,
+    JOB_AD,
 )
 from .util import Pixel
 
@@ -29,8 +30,13 @@ def initializer():
     signal(SIGINT, lambda: None)  # type: ignore
 
 
-def commit(date: datetime.datetime, i: int):
+def commit(date: datetime.datetime, last: bool = False):
     seconds = math.floor(date.timestamp())
+
+    if last:
+        message = JOB_AD + "\n" + DUMMY_COMMIT_MESSAGE
+    else:
+        message = DUMMY_COMMIT_MESSAGE
 
     return subprocess.run(
         [
@@ -38,7 +44,7 @@ def commit(date: datetime.datetime, i: int):
             "commit",
             "--allow-empty",
             "-m",
-            f"{i=} " + DUMMY_COMMIT_MESSAGE,
+            message,
         ],
         capture_output=True,
         env=dict(os.environ)
@@ -206,7 +212,7 @@ class GitHub:
                 )
 
                 for n in range(delta.count):
-                    commit(delta.date, n)
+                    commit(delta.date, n == delta.count - 1)
         subprocess.run(
             ["gh", "repo", "create", repo, "--public", "--push", "--source", "."]
         )

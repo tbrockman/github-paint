@@ -198,13 +198,6 @@ def draw(
             envvar="INPUT_VALIGN",
         ),
     ] = VAlign.CENTER,
-    # parallelism: Annotated[
-    #     int,
-    #     typer.Option(
-    #         help="The number of parallel processes to use for generating the contribution banner",
-    #         envvar="INPUT_PARALLELISM",
-    #     ),
-    # ] = (os.cpu_count() or 2) - 1,
     dry_run: Annotated[
         bool,
         typer.Option(
@@ -221,6 +214,7 @@ def draw(
     GitHub's contribution graph is a 53x7 grid (per year) where each cell represents a day (in UTC),
     with 5 shades of green indicating relatively (as a heatmap) how many contributions were made on each day. By default (filtering to a specific time range will change this) the first cell is the previous Sunday of this week last year, and the last visible cell is today.
     Based on one GitHub dev comment (https://github.com/orgs/community/discussions/23261#discussioncomment-3239758), the shade is determined by the distribution of commits in a given time-period, where each shade matches a given quartile.
+    The "quartile's" are not _actual_ quartiles however, the ranges seem to be divided by taking the maximum number of commits on a single day in a given time period, divided by 4.
     """
     empty_pixel = Pixel(Color(1) if not inverse else Color(4))
     height = 7
