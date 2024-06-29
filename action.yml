@@ -34,7 +34,7 @@ inputs:
   separator:
     description: 'Separator for the contribution graph'
     required: false
-    default: '☺'
+    default: '|'
   inverse:
     description: 'Invert the color of the pixels on the contribution graph'
     required: false

@@ -162,7 +162,7 @@ def draw(
             help="An optional string to use to separate the text (if repeating)",
             envvar="INPUT_SEPARATOR",
         ),
-    ] = " ",
+    ] = "|",
     inverse: Annotated[
         bool,
         typer.Option(
