@@ -9,10 +9,8 @@ import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Set, Tuple
+from typing import List, Set, Tuple
 from signal import signal, SIGINT
-
-from pydantic import BaseModel, Field
 
 from .constants import (
     DATETIME_FORMAT,
@@ -28,59 +26,6 @@ class Visibility(str, Enum):
     PUBLIC = "public"
     PRIVATE = "private"
     INTERNAL = "internal"
-
-
-class User(BaseModel):
-    login: str
-
-
-class Author(BaseModel):
-    user: Optional[User] = Field(alias="user", default=None)
-
-
-class CommitNode(BaseModel):
-    author: Author
-    commited_date: datetime.datetime = Field(alias="committedDate")
-
-
-class PageInfo(BaseModel):
-    has_next_page: bool = Field(alias="hasNextPage")
-    end_cursor: Optional[str] = Field(alias="endCursor", default=None)
-
-
-class CommitHistory(BaseModel):
-    commits: List[CommitNode] = Field(alias="nodes")
-    page_info: PageInfo = Field(alias="pageInfo")
-
-    @property
-    def has_next_page(self) -> bool:
-        return self.page_info.has_next_page
-
-    @property
-    def end_cursor(self) -> Optional[str]:
-        return self.page_info.end_cursor
-
-
-class Branch(BaseModel):
-    history: CommitHistory
-
-
-class BranchRef(BaseModel):
-    name: str
-    target: Branch
-
-
-class Repository(BaseModel):
-    name: str
-    default_branch_ref: BranchRef = Field(alias="defaultBranchRef")
-
-
-class CommitHistoryResponseData(BaseModel):
-    repository: Repository
-
-
-class CommitHistoryGraphQLResponse(BaseModel):
-    data: CommitHistoryResponseData
 
 
 @dataclass(frozen=True)
