@@ -142,7 +142,7 @@ class GitHub:
         return counts
 
     def calc_necessary_contrib_deltas(
-        self, cells: List[Pixel], user: str, repo: str, contribs: List[Contribution]
+        self, cells: List[Pixel], repo: str, contribs: List[Contribution]
     ) -> List[Contribution]:
         # check if the dummy repo exists in github
         exists = (

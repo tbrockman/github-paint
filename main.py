@@ -262,7 +262,7 @@ def draw(
         v_align=v_align,
     )
     print(window)
-    deltas = git.calc_necessary_contrib_deltas(window.buf[::-1], user, repo, contribs)
+    deltas = git.calc_necessary_contrib_deltas(window.buf[::-1], repo, contribs)
     print("Commit delta mask (darker=more commits, lighter=less):")
     print_contribs(deltas, weeks)
 
