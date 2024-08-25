@@ -1,4 +1,8 @@
 import datetime
+import errno
+import os
+import stat
+import shutil
 
 from enum import Enum
 from dataclasses import dataclass, field
@@ -9,8 +13,8 @@ from dateutil.relativedelta import relativedelta, SU, SA  # type: ignore
 now = datetime.datetime.now(datetime.UTC).replace(
     hour=0, minute=0, second=0, microsecond=0
 )
-sunday_of_this_date_last_year = now - relativedelta(years=1, weekday=SU(-1))
 next_saturday = now + relativedelta(weekday=SA(0))
+prev_sunday_52_weeks_ago = next_saturday - datetime.timedelta(weeks=52, days=6)
 
 
 def sunday_of_date(date: datetime.datetime) -> datetime.datetime:
@@ -79,3 +83,16 @@ class PixelBuffer:
             y = i % self.height
             table[y][x] = pixel
         return "\n".join(["".join([str(pixel) for pixel in row]) for row in table])
+
+
+def handle_remove_readonly(func, path, exc):  # type: ignore
+    excvalue = exc[1]  # type: ignore
+    if func in (os.rmdir, os.remove, os.unlink) and excvalue.errno == errno.EACCES:  # type: ignore
+        os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # type: ignore
+        func(path)
+    else:
+        raise
+
+
+def rmtree_readonly(path: str):
+    shutil.rmtree(path, onerror=handle_remove_readonly)  # type: ignore

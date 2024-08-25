@@ -4,20 +4,83 @@ import math
 import os
 import shutil
 import subprocess
+import tempfile
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Set, Tuple
+from enum import Enum
+from typing import List, Optional, Set, Tuple
 from signal import signal, SIGINT
+
+from pydantic import BaseModel, Field
 
 from .constants import (
     DATETIME_FORMAT,
     DATETIME_FORMAT_DAY,
     DUMMY_COMMIT_MESSAGE,
-    GRAPHQL_QUERY_TEMPLATE,
+    GRAPHQL_USER_CONTRIBUTION_QUERY_TEMPLATE,
     JOB_AD,
 )
-from .util import Pixel
+from .util import Pixel, rmtree_readonly
+
+
+class Visibility(str, Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    INTERNAL = "internal"
+
+
+class User(BaseModel):
+    login: str
+
+
+class Author(BaseModel):
+    user: Optional[User] = Field(alias="user", default=None)
+
+
+class CommitNode(BaseModel):
+    author: Author
+    commited_date: datetime.datetime = Field(alias="committedDate")
+
+
+class PageInfo(BaseModel):
+    has_next_page: bool = Field(alias="hasNextPage")
+    end_cursor: Optional[str] = Field(alias="endCursor", default=None)
+
+
+class CommitHistory(BaseModel):
+    commits: List[CommitNode] = Field(alias="nodes")
+    page_info: PageInfo = Field(alias="pageInfo")
+
+    @property
+    def has_next_page(self) -> bool:
+        return self.page_info.has_next_page
+
+    @property
+    def end_cursor(self) -> Optional[str]:
+        return self.page_info.end_cursor
+
+
+class Branch(BaseModel):
+    history: CommitHistory
+
+
+class BranchRef(BaseModel):
+    name: str
+    target: Branch
+
+
+class Repository(BaseModel):
+    name: str
+    default_branch_ref: BranchRef = Field(alias="defaultBranchRef")
+
+
+class CommitHistoryResponseData(BaseModel):
+    repository: Repository
+
+
+class CommitHistoryGraphQLResponse(BaseModel):
+    data: CommitHistoryResponseData
 
 
 @dataclass(frozen=True)
@@ -84,7 +147,7 @@ class GitHub:
         for start_dt, end_dt in ranges:
             start_str = start_dt.strftime(DATETIME_FORMAT)
             end_str = end_dt.strftime(DATETIME_FORMAT)
-            query = GRAPHQL_QUERY_TEMPLATE.format(
+            query = GRAPHQL_USER_CONTRIBUTION_QUERY_TEMPLATE.format(
                 user=user, start=start_str, end=end_str
             )
             response = subprocess.run(
@@ -104,15 +167,20 @@ class GitHub:
                     contributions.add(Contribution(date, count))
         return list(sorted(contributions, key=lambda c: c.date, reverse=True))
 
+    # you would think using the GitHub API would be easier than this
+    # but because of pagination limits on commit history (or limits on max repositories to group contribution counts by)
+    # it seems to be faster and more reliable to just clone the repository and count the commits
     def count_dummy_repo_contributions(self, repo: str) -> defaultdict[str, int]:
+        temp_dir = tempfile.gettempdir()
+        repo_path = os.path.join(temp_dir, repo)
         # clone the repo
-        subprocess.run(["gh", "repo", "clone", repo])
-        os.chdir(repo)
+        subprocess.run(["gh", "repo", "clone", repo, repo_path])
         # we assume all commits in this repository are dummy commits
         result = subprocess.run(
             ["git", "log", "--pretty=format:%ct"],
             capture_output=True,
             text=True,
+            cwd=repo_path,
         )
         counts: defaultdict[str, int] = defaultdict(int)
 
@@ -125,10 +193,11 @@ class GitHub:
                 DATETIME_FORMAT_DAY
             )
             counts[date] += 1
+        rmtree_readonly(repo_path)
         return counts
 
     def calc_necessary_contrib_deltas(
-        self, cells: List[Pixel], repo: str, contribs: List[Contribution]
+        self, cells: List[Pixel], user: str, repo: str, contribs: List[Contribution]
     ) -> List[Contribution]:
         # check if the dummy repo exists in github
         exists = (
@@ -185,7 +254,12 @@ class GitHub:
         return deltas
 
     def make_necessary_commits(
-        self, repo: str, deltas: List[Contribution], name: str, email: str
+        self,
+        repo: str,
+        deltas: List[Contribution],
+        name: str,
+        email: str,
+        visibility: Visibility,
     ):
         # remove existing repo (if it exists)
         subprocess.run(["gh", "repo", "delete", repo, "--yes"])
@@ -195,7 +269,7 @@ class GitHub:
 
         if os.path.exists(path):
             shutil.rmtree(path)
-        os.mkdir(path)
+        os.makedirs(path)
         os.chdir(path)
         subprocess.run(["git", "config", "--global", "user.name", name])
         subprocess.run(["git", "config", "--global", "user.email", email])
@@ -215,7 +289,16 @@ class GitHub:
                 for n in range(delta.count):
                     commit(delta.date, n == delta.count - 1)
         subprocess.run(
-            ["gh", "repo", "create", repo, "--public", "--push", "--source", "."]
+            [
+                "gh",
+                "repo",
+                "create",
+                repo,
+                f"--{visibility.value}",
+                "--push",
+                "--source",
+                ".",
+            ]
         )
 
     def get_user(self) -> dict[str, str]:

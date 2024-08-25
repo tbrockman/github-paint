@@ -19,6 +19,9 @@ inputs:
   repo:
     description: 'Dummy GitHub repository to push the commits to'
     required: true
+  visibility:
+    description: 'Visibility of the dummy repository (public, private, internal, or visibility of the repository being painted to)'
+    required: false
   git_name:
     description: 'Name to use for the git commits (defaults to name found in the GitHub user profile of the associated token)'
     required: false
@@ -30,6 +33,9 @@ inputs:
     required: false
   end:
     description: 'End date for the contribution graph (YYYY-MM-DD, defaults to today. End rounds to the next saturday)'
+    required: false
+  force_date:
+    description: 'Skip any date rounding and force the date range to be used for the contribution graph (YYYY-MM-DD to YYYY-MM-DD format)'
     required: false
   separator:
     description: 'Separator for the contribution graph'

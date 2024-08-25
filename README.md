@@ -27,13 +27,14 @@ a GitHub action to draw text in your GitHub contributions graph.
           with:
             text: theo.lol # basic ascii chars supported
             token: ${{ secrets.GH_PAINT_PAT }}
-            # [optional]:
             # inverse: false # invert pixel color (darker <-> lighter)
             # git_email: 'abc@example.dev' # set a specific email for git author attribution (defaults to token user primary email)
             # git_name: theo # choose an alternate name for git author contribution (defaults to token user name)
             # repo: 'github-painted' # destination repository for the filler commits
+            # visibility: public # visibility of created repository (for instance, if using github enterprise in a private org) 
             # start: 2020-01-01 # start of drawing window
             # end: 2025-12-12 # end of drawing window
+            # force_date: false # skip date any rounding, force use of specified dates
             # repeat: false # repeat text as much as possible over the window
             # separator: "|" # what to use as a separator when repeat=true
             # padding: (0,0,0,0) # (top,right,bottom,left) padding to add to the window (will clip content if necessary)
