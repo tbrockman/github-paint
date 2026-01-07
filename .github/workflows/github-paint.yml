@@ -14,5 +14,4 @@ jobs:
         text: theo.lol
         token: ${{ secrets.GH_PAINT_PAT }}
         repo: 'github-paint-test'
-        inverse: true
         git_email: 'iam@theo.lol'
