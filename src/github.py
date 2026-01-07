@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 
 from collections import defaultdict
 from dataclasses import dataclass
@@ -233,6 +234,9 @@ class GitHub:
 
                 for n in range(delta.count):
                     commit(delta.date, n == delta.count - 1)
+                    # Add a small delay to prevent subprocess resource exhaustion
+                    # when making many commits in quick succession
+                    time.sleep(0.05)
         subprocess.run(
             [
                 "gh",
