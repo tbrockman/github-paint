@@ -38,27 +38,58 @@ def initializer():
     signal(SIGINT, lambda: None)  # type: ignore
 
 
-def commit(date: datetime.datetime, last: bool = False):
-    seconds = math.floor(date.timestamp())
-
-    if last:
-        message = JOB_AD + "\n" + DUMMY_COMMIT_MESSAGE
-    else:
-        message = DUMMY_COMMIT_MESSAGE
-
-    return subprocess.run(
-        [
-            "git",
-            "commit",
-            "--allow-empty",
-            "-m",
-            message,
-        ],
-        capture_output=True,
-        env=dict(os.environ)
-        | {"GIT_COMMITTER_DATE": str(seconds), "GIT_AUTHOR_DATE": str(seconds)},
-        check=True,
-    )
+def generate_fast_import_stream(
+    deltas: List[Contribution], name: str, email: str
+) -> bytes:
+    """
+    Generate a git fast-import stream for all commits.
+    
+    This replaces thousands of individual `git commit` calls with a single
+    fast-import operation, which is orders of magnitude faster.
+    """
+    lines: List[str] = []
+    mark = 0
+    
+    # Process deltas in reverse order (oldest first) to build proper commit chain
+    reversed_deltas = deltas[::-1]
+    total_commits = sum(max(0, d.count) for d in reversed_deltas)
+    commit_index = 0
+    
+    for i, delta in enumerate(reversed_deltas):
+        if delta.count <= 0:
+            continue
+            
+        seconds = math.floor(delta.date.timestamp())
+        
+        for n in range(delta.count):
+            mark += 1
+            commit_index += 1
+            is_last_overall = (commit_index == total_commits)
+            
+            if is_last_overall:
+                message = JOB_AD + "\n" + DUMMY_COMMIT_MESSAGE
+            else:
+                message = DUMMY_COMMIT_MESSAGE
+            
+            message_bytes = message.encode('utf-8')
+            
+            lines.append(f"commit refs/heads/main")
+            lines.append(f"mark :{mark}")
+            lines.append(f"author {name} <{email}> {seconds} +0000")
+            lines.append(f"committer {name} <{email}> {seconds} +0000")
+            lines.append(f"data {len(message_bytes)}")
+            lines.append(message)
+            
+            # Reference parent commit (if not first commit)
+            if mark > 1:
+                lines.append(f"from :{mark - 1}")
+            
+            # Create minimal tree with inline empty file (required for valid commit)
+            lines.append("M 644 inline .gitkeep")
+            lines.append("data 0")
+            lines.append("")
+    
+    return "\n".join(lines).encode('utf-8')
 
 
 class GitHub:
@@ -220,7 +251,10 @@ class GitHub:
         subprocess.run(["git", "config", "--global", "user.email", email])
         subprocess.run(["git", "init", "-b", "main"], check=True)
 
-        # commit in reverse order
+        # Log what we're about to do
+        total_commits = sum(max(0, d.count) for d in deltas)
+        print(f"Creating {total_commits} commits using git fast-import...")
+        
         for i, delta in enumerate(deltas[::-1]):
             if delta.count <= 0:
                 print(
@@ -228,11 +262,27 @@ class GitHub:
                 )
             else:
                 print(
-                    f"Committing {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
+                    f"Will commit {delta.count} times on {delta.date} [{i+1}/{len(deltas)}]"
                 )
 
-                for n in range(delta.count):
-                    commit(delta.date, n == delta.count - 1)
+        # Generate fast-import stream and pipe it to git fast-import
+        stream = generate_fast_import_stream(deltas, name, email)
+        
+        result = subprocess.run(
+            ["git", "fast-import", "--quiet"],
+            input=stream,
+            capture_output=True,
+        )
+        
+        if result.returncode != 0:
+            print(f"fast-import stderr: {result.stderr.decode('utf-8')}")
+            raise subprocess.CalledProcessError(result.returncode, "git fast-import")
+        
+        # Checkout main branch to update working directory
+        subprocess.run(["git", "checkout", "main"], check=True, capture_output=True)
+        
+        print(f"Successfully created {total_commits} commits via fast-import")
+        
         subprocess.run(
             [
                 "gh",
