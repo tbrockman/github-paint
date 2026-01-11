@@ -1,7 +1,7 @@
 # GitHub Paint
 a GitHub action to draw text in your GitHub contributions graph.
 
-![example contribution graph](./assets/example.png)
+![example contribution graph](./assets/example.svg)
 
 ## Usage
 
