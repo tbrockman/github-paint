@@ -13,5 +13,5 @@ jobs:
       with:
         text: theo.lol
         token: ${{ secrets.GH_PAINT_PAT }}
-        repo: 'github-paint-test'
+        repo: 'github-paint-canvas'
         git_email: 'iam@theo.lol'
